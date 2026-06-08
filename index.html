@@ -11,6 +11,7 @@
       --ink: #0a0806;
       --paper: #f5f0e8;
       --muted: #6b5f52;
+      --ink-light: rgba(10,8,6,0.12);
     }
     html { scroll-behavior: smooth; }
     body {
@@ -20,27 +21,109 @@
       overflow-x: hidden;
       cursor: none;
     }
-    .cursor {
-      position: fixed;
-      width: 12px; height: 12px;
-      background: var(--ink);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, -50%);
-      transition: width 0.2s, height 0.2s, opacity 0.2s;
-      mix-blend-mode: multiply;
-    }
-    .cursor.expanded { width: 40px; height: 40px; opacity: 0.3; }
+
+    /* ─── PAPER TEXTURE ─── */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
       pointer-events: none;
       z-index: 0;
-      opacity: 0.4;
+      opacity: 0.5;
     }
+
+    /* paper lines */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        transparent 0px,
+        transparent 27px,
+        rgba(10,8,6,0.04) 28px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── INK DRIP CURSOR ─── */
+    #cursor-container {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      top: 0; left: 0;
+      will-change: transform;
+    }
+    #cursor-nib {
+      position: absolute;
+      top: 0; left: 0;
+      width: 10px; height: 10px;
+      transform: translate(-50%, -50%);
+    }
+    #cursor-nib svg {
+      overflow: visible;
+    }
+    .drip-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      border-radius: 50%;
+      background: var(--ink);
+      transform: translate(-50%, -50%);
+      animation: drip-fall 0.8s cubic-bezier(0.2, 0, 0.8, 1) forwards;
+    }
+    @keyframes drip-fall {
+      0%   { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, calc(-50% + 30px)) scale(0.2); }
+    }
+    .ink-splat {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9997;
+      transform: translate(-50%, -50%);
+      animation: splat-fade 1.2s ease forwards;
+    }
+    @keyframes splat-fade {
+      0%   { opacity: 0.5; transform: translate(-50%, -50%) scale(0); }
+      30%  { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+    }
+    .ink-trail {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9996;
+      border-radius: 50%;
+      background: var(--ink);
+      animation: trail-fade 0.4s ease forwards;
+    }
+    @keyframes trail-fade {
+      0%   { opacity: 0.15; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+    }
+
+    /* ─── CORNER MARKS ─── */
+    .corner-mark { position: fixed; width: 20px; height: 20px; pointer-events: none; z-index: 10; opacity: 0.15; }
+    .corner-mark.tl { top:1.5rem; left:1.5rem; border-top:1px solid var(--ink); border-left:1px solid var(--ink); }
+    .corner-mark.tr { top:1.5rem; right:1.5rem; border-top:1px solid var(--ink); border-right:1px solid var(--ink); }
+    .corner-mark.bl { bottom:1.5rem; left:1.5rem; border-bottom:1px solid var(--ink); border-left:1px solid var(--ink); }
+    .corner-mark.br { bottom:1.5rem; right:1.5rem; border-bottom:1px solid var(--ink); border-right:1px solid var(--ink); }
+
+    /* ─── INK DROP INTRO ─── */
+    .ink-drop {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 3px; height: 0; background: var(--ink); z-index: 9000;
+      animation: inkDrop 1.2s cubic-bezier(0.16,1,0.3,1) 0s forwards;
+      pointer-events: none;
+    }
+    @keyframes inkDrop {
+      0%   { height: 0; opacity: 1; }
+      70%  { height: 100vh; opacity: 1; }
+      100% { height: 100vh; opacity: 0; }
+    }
+
+    /* ─── HERO ─── */
     .hero {
       min-height: 100vh;
       display: flex;
@@ -50,13 +133,14 @@
       position: relative;
       overflow: hidden;
       padding: 2rem;
+      z-index: 1;
     }
     .hero-bg-text {
       position: absolute;
       font-family: 'IM Fell English', serif;
       font-size: clamp(8rem, 20vw, 18rem);
       color: transparent;
-      -webkit-text-stroke: 1px rgba(10,8,6,0.06);
+      -webkit-text-stroke: 1px rgba(10,8,6,0.05);
       letter-spacing: -0.05em;
       user-select: none;
       white-space: nowrap;
@@ -119,6 +203,8 @@
       50% { opacity:1; transform:scaleY(0.6); }
     }
     @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+
+    /* ─── GALLERY ─── */
     .gallery-section {
       padding: 4rem 2rem 6rem;
       max-width: 1400px;
@@ -141,46 +227,169 @@
       font-size: 0.7rem; letter-spacing: 0.4em;
       text-transform: uppercase; color: var(--muted); white-space: nowrap;
     }
-    .ig-grid { columns: 1; column-gap: 2rem; }
+    .ig-grid {
+      columns: 1; column-gap: 2rem;
+    }
     @media (min-width: 640px)  { .ig-grid { columns: 2; } }
     @media (min-width: 1024px) { .ig-grid { columns: 3; } }
+
+    /* ─── POST ITEM ─── */
     .ig-item {
       break-inside: avoid;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
       opacity: 0; transform: translateY(40px);
       transition: opacity 0.7s ease, transform 0.7s ease;
+      position: relative;
     }
     .ig-item.visible { opacity:1; transform:translateY(0); }
-    .ig-item blockquote { border-radius:2px !important; box-shadow:0 2px 20px rgba(10,8,6,0.08) !important; }
+
+    .post-wrapper {
+      position: relative;
+      transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+    }
+    .post-wrapper:hover {
+      transform: translateY(-4px) rotate(-0.3deg);
+    }
+    .post-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .post-wrapper:hover::before {
+      border-color: rgba(10,8,6,0.15);
+      box-shadow: 4px 6px 20px rgba(10,8,6,0.12), -1px -1px 0 rgba(10,8,6,0.05);
+    }
+
+    /* pin effect on hover */
+    .post-wrapper::after {
+      content: '';
+      position: absolute;
+      top: -6px; left: 50%;
+      transform: translateX(-50%) scaleY(0);
+      width: 4px; height: 12px;
+      background: var(--muted);
+      border-radius: 2px 2px 0 0;
+      z-index: 3;
+      transition: transform 0.2s ease 0.05s, opacity 0.2s ease;
+      opacity: 0;
+      transform-origin: bottom center;
+    }
+    .post-wrapper:hover::after {
+      transform: translateX(-50%) scaleY(1);
+      opacity: 0.5;
+    }
+
+    /* post number badge */
+    .post-number {
+      position: absolute;
+      top: -10px; right: -10px;
+      width: 28px; height: 28px;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IM Fell English', serif;
+      font-size: 0.65rem;
+      font-style: italic;
+      z-index: 10;
+      opacity: 0;
+      transform: scale(0.6) rotate(-10deg);
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .post-wrapper:hover .post-number {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+
+    /* ink splatter on click */
+    .post-wrapper.clicked {
+      animation: inkPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    @keyframes inkPop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(0.97) rotate(0.5deg); }
+      70%  { transform: scale(1.02) rotate(-0.3deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    /* click ripple */
+    .ink-ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(10,8,6,0.08);
+      pointer-events: none;
+      transform: scale(0);
+      animation: ripple-expand 0.6s ease-out forwards;
+      z-index: 20;
+    }
+    @keyframes ripple-expand {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    .ig-item blockquote {
+      border-radius: 2px !important;
+      box-shadow: 0 2px 20px rgba(10,8,6,0.06) !important;
+    }
+
+    /* ─── FOOTER ─── */
     footer {
       border-top: 1px solid rgba(10,8,6,0.1);
       padding: 3rem 2rem; text-align: center;
       position: relative; z-index: 1;
     }
     .footer-name { font-family:'IM Fell English',serif; font-size:1.8rem; font-style:italic; color:var(--muted); margin-bottom:0.5rem; }
-    .footer-ig { font-size:0.75rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--muted); opacity:0.6; text-decoration:none; }
-    .footer-ig:hover { opacity:1; }
-    .ink-drop {
-      position:fixed; top:0; left:50%; transform:translateX(-50%);
-      width:4px; height:0; background:var(--ink); z-index:9000;
-      animation:inkDrop 1s cubic-bezier(0.16,1,0.3,1) 0s forwards;
-      pointer-events:none;
+    .footer-ig {
+      font-size:0.75rem; letter-spacing:0.3em;
+      text-transform:uppercase; color:var(--muted);
+      opacity:0.6; text-decoration:none;
+      transition: opacity 0.2s ease, letter-spacing 0.3s ease;
     }
-    @keyframes inkDrop {
-      0%  { height:0; opacity:1; }
-      70% { height:100vh; opacity:1; }
-      100%{ height:100vh; opacity:0; }
+    .footer-ig:hover { opacity:1; letter-spacing: 0.45em; }
+
+    /* ─── INK BLOT DECORATION ─── */
+    .ink-blot {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9995;
+      opacity: 0;
+      animation: blot-appear 2s ease forwards;
     }
-    .corner-mark { position:fixed; width:20px; height:20px; pointer-events:none; z-index:10; opacity:0.15; }
-    .corner-mark.tl { top:1.5rem; left:1.5rem; border-top:1px solid var(--ink); border-left:1px solid var(--ink); }
-    .corner-mark.tr { top:1.5rem; right:1.5rem; border-top:1px solid var(--ink); border-right:1px solid var(--ink); }
-    .corner-mark.bl { bottom:1.5rem; left:1.5rem; border-bottom:1px solid var(--ink); border-left:1px solid var(--ink); }
-    .corner-mark.br { bottom:1.5rem; right:1.5rem; border-bottom:1px solid var(--ink); border-right:1px solid var(--ink); }
+    @keyframes blot-appear {
+      0%   { opacity: 0; transform: scale(0) rotate(var(--rot)); }
+      20%  { opacity: 0.06; transform: scale(1) rotate(var(--rot)); }
+      100% { opacity: 0.04; transform: scale(1) rotate(var(--rot)); }
+    }
   </style>
 </head>
 <body>
   <div class="ink-drop"></div>
-  <div class="cursor" id="cursor"></div>
+
+  <!-- custom ink cursor -->
+  <div id="cursor-container">
+    <div id="cursor-nib">
+      <svg width="24" height="36" viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- pen nib shape -->
+        <path id="nib-body" d="M12 2 L20 14 L12 34 L4 14 Z" fill="#0a0806" opacity="0.9"/>
+        <path d="M12 34 L10 28 L12 30 L14 28 Z" fill="#0a0806"/>
+        <!-- ink drop hanging from nib, animates when idle -->
+        <circle id="ink-drop-cursor" cx="12" cy="34" r="0" fill="#0a0806" opacity="0.8">
+          <animate attributeName="r" values="0;2.5;2.5;0" keyTimes="0;0.3;0.85;1"
+            dur="3s" repeatCount="indefinite" begin="2s"/>
+          <animate attributeName="cy" values="34;34;38;42" keyTimes="0;0.3;0.85;1"
+            dur="3s" repeatCount="indefinite" begin="2s"/>
+          <animate attributeName="opacity" values="0;0.9;0.7;0" keyTimes="0;0.3;0.85;1"
+            dur="3s" repeatCount="indefinite" begin="2s"/>
+        </circle>
+      </svg>
+    </div>
+  </div>
+
   <div class="corner-mark tl"></div>
   <div class="corner-mark tr"></div>
   <div class="corner-mark bl"></div>
@@ -196,55 +405,8 @@
 
   <section class="gallery-section">
     <div class="section-label"><span>Latest Works</span></div>
-    <div class="ig-grid">
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYJ1rADFE1/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DYKZOSCDGKL/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DYKZHYLDOk3/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DYI1y12iPzO/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DYISqVVDNjU/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DYBAS7miDuc/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DX70ANPIwTJ/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DX7z7xBIngX/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DX7yJmHjMWW/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DWB2_kuDPXO/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DWB2NfFjEXv/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DVohCEfjOXD/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DUJBikeDOJB/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DUJBcFDDCT3/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DT-8M4wjJ-R/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTxtAG5DFpX/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTxrC_eDI-N/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYLzBmjOTs/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYK-bjjJIL/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYKr2BDL7p/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYKXJCDMbS/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYKOqWDDSK/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYJlfsDLeA/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYJYzrDCpd/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYJGkCDNvQ/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYI42BDCiK/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYIUQljIXC/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYIAfwjEiJ/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYH1AXDLPQ/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYHb9nDDDD/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYHPsTjJdH/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYG8ZojOu8/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYGTKMDApz/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYGOCqDMXt/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYGIkQjF_p/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYGA92DAl8/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYF6ELDNQ4/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYFzzTjJVs/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYFrzdDEQ6/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYFa4ZDKDI/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYFS3ijI9D/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYFASCDIim/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYExoojM13/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.3s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYEnfMjBmR/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.4s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYEXxJDD_I/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYELhpjC95/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.1s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYD95jjKFA/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
-      <div class="ig-item" style="transition-delay:0.2s"><blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="https://www.instagram.com/p/DTYDZXVDH2w/" data-instgrm-version="14" style="width:100%;max-width:100%;min-width:unset;"></blockquote></div>
+    <div class="ig-grid" id="ig-grid">
+      <!-- posts injected by JS below -->
     </div>
   </section>
 
@@ -253,23 +415,241 @@
     <a class="footer-ig" href="https://www.instagram.com/molly_ina_trolly/" target="_blank">@molly_ina_trolly ↗</a>
   </footer>
 
-  <script async src="//www.instagram.com/embed.js"></script>
   <script>
-    const cursor = document.getElementById('cursor');
-    document.addEventListener('mousemove', e => {
-      cursor.style.left = e.clientX + 'px';
-      cursor.style.top  = e.clientY + 'px';
+    /* ─── POST URLS ─── */
+    const posts = [
+      "https://www.instagram.com/p/DTYJ1rADFE1/",
+      "https://www.instagram.com/p/DYKZOSCDGKL/",
+      "https://www.instagram.com/p/DYKZHYLDOk3/",
+      "https://www.instagram.com/p/DYI1y12iPzO/",
+      "https://www.instagram.com/p/DYISqVVDNjU/",
+      "https://www.instagram.com/p/DYBAS7miDuc/",
+      "https://www.instagram.com/p/DX70ANPIwTJ/",
+      "https://www.instagram.com/p/DX7z7xBIngX/",
+      "https://www.instagram.com/p/DX7yJmHjMWW/",
+      "https://www.instagram.com/p/DWB2_kuDPXO/",
+      "https://www.instagram.com/p/DWB2NfFjEXv/",
+      "https://www.instagram.com/p/DVohCEfjOXD/",
+      "https://www.instagram.com/p/DUJBikeDOJB/",
+      "https://www.instagram.com/p/DUJBcFDDCT3/",
+      "https://www.instagram.com/p/DT-8M4wjJ-R/",
+      "https://www.instagram.com/p/DTxtAG5DFpX/",
+      "https://www.instagram.com/p/DTxrC_eDI-N/",
+      "https://www.instagram.com/p/DTYLzBmjOTs/",
+      "https://www.instagram.com/p/DTYK-bjjJIL/",
+      "https://www.instagram.com/p/DTYKr2BDL7p/",
+      "https://www.instagram.com/p/DTYKXJCDMbS/",
+      "https://www.instagram.com/p/DTYKOqWDDSK/",
+      "https://www.instagram.com/p/DTYJlfsDLeA/",
+      "https://www.instagram.com/p/DTYJYzrDCpd/",
+      "https://www.instagram.com/p/DTYJGkCDNvQ/",
+      "https://www.instagram.com/p/DTYI42BDCiK/",
+      "https://www.instagram.com/p/DTYIUQljIXC/",
+      "https://www.instagram.com/p/DTYIAfwjEiJ/",
+      "https://www.instagram.com/p/DTYH1AXDLPQ/",
+      "https://www.instagram.com/p/DTYHb9nDDDD/",
+      "https://www.instagram.com/p/DTYHPsTjJdH/",
+      "https://www.instagram.com/p/DTYG8ZojOu8/",
+      "https://www.instagram.com/p/DTYGTKMDApz/",
+      "https://www.instagram.com/p/DTYGOCqDMXt/",
+      "https://www.instagram.com/p/DTYGIkQjF_p/",
+      "https://www.instagram.com/p/DTYGA92DAl8/",
+      "https://www.instagram.com/p/DTYF6ELDNQ4/",
+      "https://www.instagram.com/p/DTYFzzTjJVs/",
+      "https://www.instagram.com/p/DTYFrzdDEQ6/",
+      "https://www.instagram.com/p/DTYFa4ZDKDI/",
+      "https://www.instagram.com/p/DTYFS3ijI9D/",
+      "https://www.instagram.com/p/DTYFASCDIim/",
+      "https://www.instagram.com/p/DTYExoojM13/",
+      "https://www.instagram.com/p/DTYEnfMjBmR/",
+      "https://www.instagram.com/p/DTYEXxJDD_I/",
+      "https://www.instagram.com/p/DTYELhpjC95/",
+      "https://www.instagram.com/p/DTYD95jjKFA/",
+      "https://www.instagram.com/p/DTYDZXVDH2w/"
+    ];
+
+    /* ─── BUILD GRID ─── */
+    const grid = document.getElementById('ig-grid');
+    const delays = [0, 0.1, 0.2, 0.3, 0.4];
+    posts.forEach((url, i) => {
+      const item = document.createElement('div');
+      item.className = 'ig-item';
+      item.style.transitionDelay = delays[i % 5] + 's';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'post-wrapper';
+
+      const num = document.createElement('div');
+      num.className = 'post-number';
+      num.textContent = i + 1;
+
+      const bq = document.createElement('blockquote');
+      bq.className = 'instagram-media';
+      bq.setAttribute('data-instgrm-captioned', '');
+      bq.setAttribute('data-instgrm-permalink', url);
+      bq.setAttribute('data-instgrm-version', '14');
+      bq.style.cssText = 'width:100%;max-width:100%;min-width:unset;';
+
+      /* click animation + ripple */
+      wrapper.addEventListener('click', (e) => {
+        wrapper.classList.remove('clicked');
+        void wrapper.offsetWidth;
+        wrapper.classList.add('clicked');
+        wrapper.addEventListener('animationend', () => wrapper.classList.remove('clicked'), { once: true });
+
+        const ripple = document.createElement('div');
+        ripple.className = 'ink-ripple';
+        const rect = wrapper.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size/2}px;top:${e.clientY - rect.top - size/2}px;`;
+        wrapper.appendChild(ripple);
+        ripple.addEventListener('animationend', () => ripple.remove());
+
+        spawnSplat(e.clientX, e.clientY);
+      });
+
+      wrapper.appendChild(num);
+      wrapper.appendChild(bq);
+      item.appendChild(wrapper);
+      grid.appendChild(item);
     });
-    document.querySelectorAll('a, blockquote').forEach(el => {
-      el.addEventListener('mouseenter', () => cursor.classList.add('expanded'));
-      el.addEventListener('mouseleave', () => cursor.classList.remove('expanded'));
-    });
+
+    /* ─── SCROLL REVEAL ─── */
     const observer = new IntersectionObserver(entries => {
       entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
       });
-    }, { threshold: 0.1 });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
     document.querySelectorAll('.ig-item, .section-label').forEach(el => observer.observe(el));
+
+    /* ─── INSTAGRAM EMBED (lazy per viewport) ─── */
+    let embedProcessed = false;
+    function loadInstagram() {
+      if (document.querySelector('script[src*="instagram.com/embed"]')) {
+        if (window.instgrm) window.instgrm.Embeds.process();
+        return;
+      }
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = '//www.instagram.com/embed.js';
+      s.onload = () => {
+        if (window.instgrm) window.instgrm.Embeds.process();
+        embedProcessed = true;
+      };
+      document.body.appendChild(s);
+    }
+
+    /* trigger load once user scrolls toward gallery */
+    const gallerySection = document.querySelector('.gallery-section');
+    const galleryObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadInstagram();
+        galleryObserver.disconnect();
+      }
+    }, { rootMargin: '400px' });
+    galleryObserver.observe(gallerySection);
+
+    /* re-process as new posts scroll into view */
+    const igItemObserver = new IntersectionObserver((entries) => {
+      const anyVisible = entries.some(e => e.isIntersecting);
+      if (anyVisible && window.instgrm && embedProcessed) {
+        window.instgrm.Embeds.process();
+      }
+    }, { rootMargin: '200px' });
+    document.querySelectorAll('.ig-item').forEach(el => igItemObserver.observe(el));
+
+    /* ─── INK CURSOR ─── */
+    const cursorContainer = document.getElementById('cursor-container');
+    const nibEl = document.getElementById('cursor-nib');
+    let mx = -100, my = -100;
+    let cx = -100, cy = -100;
+    let trail = [];
+    let lastTrailTime = 0;
+    let dripsLeft = 0;
+    let dripInterval = null;
+    let speed = 0;
+    let lastX = 0, lastY = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      speed = Math.hypot(e.clientX - lastX, e.clientY - lastY);
+      lastX = e.clientX; lastY = e.clientY;
+
+      const now = Date.now();
+      if (now - lastTrailTime > 18) {
+        spawnTrail(mx, my, Math.min(speed * 0.1, 3));
+        lastTrailTime = now;
+      }
+    });
+
+    function spawnTrail(x, y, r = 2) {
+      if (r < 0.5) return;
+      const t = document.createElement('div');
+      t.className = 'ink-trail';
+      const size = r * 2;
+      t.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
+      document.body.appendChild(t);
+      t.addEventListener('animationend', () => t.remove());
+    }
+
+    function spawnDrip(x, y) {
+      const d = document.createElement('div');
+      d.className = 'drip-particle';
+      const size = 3 + Math.random() * 4;
+      d.style.cssText = `width:${size}px;height:${size}px;left:${x + (Math.random()-0.5)*8}px;top:${y}px;`;
+      document.body.appendChild(d);
+      d.addEventListener('animationend', () => d.remove());
+    }
+
+    function spawnSplat(x, y) {
+      const s = document.createElement('div');
+      s.className = 'ink-splat';
+      const size = 30 + Math.random() * 20;
+      s.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;`;
+      s.innerHTML = `<svg viewBox="0 0 60 60" width="${size}" height="${size}">
+        <ellipse cx="30" cy="30" rx="${18+Math.random()*8}" ry="${14+Math.random()*8}" fill="#0a0806" opacity="0.7"/>
+        <ellipse cx="${20+Math.random()*20}" cy="${20+Math.random()*20}" rx="${4+Math.random()*5}" ry="${3+Math.random()*4}" fill="#0a0806" opacity="0.5"/>
+        <ellipse cx="${10+Math.random()*10}" cy="${35+Math.random()*10}" rx="${2+Math.random()*3}" ry="${2+Math.random()*3}" fill="#0a0806" opacity="0.4"/>
+        <ellipse cx="${40+Math.random()*15}" cy="${15+Math.random()*15}" rx="${2+Math.random()*4}" ry="${1+Math.random()*3}" fill="#0a0806" opacity="0.4"/>
+      </svg>`;
+      document.body.appendChild(s);
+      s.addEventListener('animationend', () => s.remove());
+    }
+
+    /* smooth cursor follow */
+    function animateCursor() {
+      cx += (mx - cx) * 0.18;
+      cy += (my - cy) * 0.18;
+      cursorContainer.style.transform = `translate(${cx}px, ${cy}px)`;
+
+      /* tilt nib toward direction */
+      const dx = mx - cx, dy = my - cy;
+      const angle = Math.atan2(dy, dx) * (180/Math.PI) - 90;
+      nibEl.style.transform = `translate(-50%, -8%) rotate(${angle}deg)`;
+
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    /* random drips when hovering over posts */
+    document.querySelectorAll('.post-wrapper').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        dripInterval = setInterval(() => spawnDrip(mx, my + 5), 180);
+      });
+      el.addEventListener('mouseleave', () => {
+        clearInterval(dripInterval);
+      });
+    });
+
+    /* occasional idle drip from nib */
+    setInterval(() => {
+      if (Math.random() > 0.6) spawnDrip(cx, cy + 10);
+    }, 1200);
+
   </script>
 </body>
 </html>
