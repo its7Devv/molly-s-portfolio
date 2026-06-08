@@ -1,655 +1,588 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Molly — Ink Art</title>
   <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --ink: #0a0806;
-      --paper: #f5f0e8;
-      --muted: #6b5f52;
-      --ink-light: rgba(10,8,6,0.12);
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --ink:#0a0806;
+      --paper:#f5f0e8;
+      --muted:#6b5f52;
     }
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--paper);
-      color: var(--ink);
-      font-family: 'Cormorant Garamond', serif;
-      overflow-x: hidden;
-      cursor: none;
-    }
-
-    /* ─── PAPER TEXTURE ─── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.5;
+    html{scroll-behavior:smooth}
+    body{
+      background:var(--paper);
+      color:var(--ink);
+      font-family:'Cormorant Garamond',serif;
+      overflow-x:hidden;
+      cursor:none;
     }
 
-    /* paper lines */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: repeating-linear-gradient(
-        transparent 0px,
-        transparent 27px,
-        rgba(10,8,6,0.04) 28px
-      );
-      pointer-events: none;
-      z-index: 0;
+    /* paper texture */
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+      pointer-events:none;z-index:0;opacity:0.5;
+    }
+    /* ruled lines */
+    body::after{
+      content:'';position:fixed;inset:0;
+      background-image:repeating-linear-gradient(transparent 0px,transparent 27px,rgba(10,8,6,0.032) 28px);
+      pointer-events:none;z-index:0;
     }
 
-    /* ─── INK DRIP CURSOR ─── */
-    #cursor-container {
-      position: fixed;
-      pointer-events: none;
-      z-index: 9999;
-      top: 0; left: 0;
-      will-change: transform;
+    /* ── DEV BANNER ── */
+    #dev-banner{
+      position:fixed;top:0;left:0;right:0;
+      z-index:6000;
+      height:30px;
+      background:var(--ink);
+      color:var(--paper);
+      font-family:'Cormorant Garamond',serif;
+      font-size:0.68rem;
+      letter-spacing:0.2em;
+      text-transform:uppercase;
+      display:flex;align-items:center;justify-content:center;gap:0.7rem;
+      opacity:0;
+      transform:translateY(-100%);
+      transition:opacity 0.5s ease,transform 0.5s cubic-bezier(0.16,1,0.3,1);
     }
-    #cursor-nib {
-      position: absolute;
-      top: 0; left: 0;
-      width: 10px; height: 10px;
-      transform: translate(-50%, -50%);
+    #dev-banner.show{opacity:1;transform:translateY(0)}
+    #dev-banner a{
+      color:rgba(245,240,232,0.75);
+      text-decoration:none;
+      transition:color 0.15s;
     }
-    #cursor-nib svg {
-      overflow: visible;
+    #dev-banner a:hover{color:var(--paper)}
+    #dev-banner .dot{opacity:0.3;font-size:0.5rem}
+    #banner-close{
+      position:absolute;right:0.8rem;top:50%;transform:translateY(-50%);
+      background:none;border:none;color:rgba(245,240,232,0.4);
+      font-size:0.85rem;cursor:none;
+      transition:color 0.15s;line-height:1;padding:4px;
     }
-    .drip-particle {
-      position: fixed;
-      pointer-events: none;
-      z-index: 9998;
-      border-radius: 50%;
-      background: var(--ink);
-      transform: translate(-50%, -50%);
-      animation: drip-fall 0.8s cubic-bezier(0.2, 0, 0.8, 1) forwards;
+    #banner-close:hover{color:var(--paper)}
+    body.banner-up{padding-top:30px}
+
+    /* ── LOADER ── */
+    #loader{
+      position:fixed;inset:0;
+      background:var(--ink);
+      z-index:9999;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2rem;
+      transition:opacity 0.7s ease,transform 0.7s cubic-bezier(0.16,1,0.3,1);
     }
-    @keyframes drip-fall {
-      0%   { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
-      100% { opacity: 0; transform: translate(-50%, calc(-50% + 30px)) scale(0.2); }
+    #loader.out{opacity:0;pointer-events:none;transform:translateY(-6px)}
+
+    .ld-title{
+      font-family:'IM Fell English',serif;
+      font-size:clamp(2.2rem,7vw,4.5rem);
+      color:var(--paper);font-weight:400;letter-spacing:-0.02em;
+      opacity:0;transform:translateY(14px);
+      animation:ldUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s forwards;
     }
-    .ink-splat {
-      position: fixed;
-      pointer-events: none;
-      z-index: 9997;
-      transform: translate(-50%, -50%);
-      animation: splat-fade 1.2s ease forwards;
+    .ld-title em{font-style:italic;opacity:0.5}
+
+    /* animated nib + drip */
+    .ld-nib{
+      opacity:0;animation:ldUp 0.6s ease 0.45s forwards;
     }
-    @keyframes splat-fade {
-      0%   { opacity: 0.5; transform: translate(-50%, -50%) scale(0); }
-      30%  { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
-      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+    .ld-nib svg{overflow:visible}
+
+    .ld-bar-wrap{
+      width:110px;height:1px;background:rgba(245,240,232,0.12);
+      position:relative;overflow:hidden;
+      opacity:0;animation:ldUp 0.4s ease 0.65s forwards;
     }
-    .ink-trail {
-      position: fixed;
-      pointer-events: none;
-      z-index: 9996;
-      border-radius: 50%;
-      background: var(--ink);
-      animation: trail-fade 0.4s ease forwards;
+    .ld-bar{
+      position:absolute;top:0;left:0;height:100%;width:0;
+      background:var(--paper);transition:width 0.08s linear;
     }
-    @keyframes trail-fade {
-      0%   { opacity: 0.15; transform: translate(-50%, -50%) scale(1); }
-      100% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+    .ld-label{
+      font-size:0.62rem;letter-spacing:0.38em;text-transform:uppercase;
+      color:rgba(245,240,232,0.3);
+      opacity:0;animation:ldUp 0.4s ease 0.75s forwards;
+    }
+    @keyframes ldUp{to{opacity:1;transform:translateY(0)}}
+
+    /* ── CURSOR — simple, no lag ── */
+    #cur{
+      position:fixed;pointer-events:none;z-index:8000;
+      top:0;left:0;
+      /* hotspot at tip = bottom of nib */
+    }
+    /* CSS drip animation when hovering a post */
+    #cur.over-post #cur-drop{
+      animation:dripDown 0.7s cubic-bezier(0.4,0,0.6,1) infinite;
+    }
+    @keyframes dripDown{
+      0%  {r:0;cy:50;opacity:0}
+      25% {r:3.5;cy:50;opacity:1}
+      80% {r:3;cy:68;opacity:0.6}
+      100%{r:0;cy:80;opacity:0}
     }
 
-    /* ─── CORNER MARKS ─── */
-    .corner-mark { position: fixed; width: 20px; height: 20px; pointer-events: none; z-index: 10; opacity: 0.15; }
-    .corner-mark.tl { top:1.5rem; left:1.5rem; border-top:1px solid var(--ink); border-left:1px solid var(--ink); }
-    .corner-mark.tr { top:1.5rem; right:1.5rem; border-top:1px solid var(--ink); border-right:1px solid var(--ink); }
-    .corner-mark.bl { bottom:1.5rem; left:1.5rem; border-bottom:1px solid var(--ink); border-left:1px solid var(--ink); }
-    .corner-mark.br { bottom:1.5rem; right:1.5rem; border-bottom:1px solid var(--ink); border-right:1px solid var(--ink); }
-
-    /* ─── INK DROP INTRO ─── */
-    .ink-drop {
-      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-      width: 3px; height: 0; background: var(--ink); z-index: 9000;
-      animation: inkDrop 1.2s cubic-bezier(0.16,1,0.3,1) 0s forwards;
-      pointer-events: none;
+    /* splat on click */
+    .splat{
+      position:fixed;pointer-events:none;z-index:7990;
+      transform:translate(-50%,-50%);
+      animation:splatOut 0.75s ease forwards;
     }
-    @keyframes inkDrop {
-      0%   { height: 0; opacity: 1; }
-      70%  { height: 100vh; opacity: 1; }
-      100% { height: 100vh; opacity: 0; }
+    @keyframes splatOut{
+      0%{opacity:0;transform:translate(-50%,-50%) scale(0)}
+      20%{opacity:0.6;transform:translate(-50%,-50%) scale(1)}
+      100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
     }
 
-    /* ─── HERO ─── */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      padding: 2rem;
-      z-index: 1;
-    }
-    .hero-bg-text {
-      position: absolute;
-      font-family: 'IM Fell English', serif;
-      font-size: clamp(8rem, 20vw, 18rem);
-      color: transparent;
-      -webkit-text-stroke: 1px rgba(10,8,6,0.05);
-      letter-spacing: -0.05em;
-      user-select: none;
-      white-space: nowrap;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      animation: bgDrift 20s ease-in-out infinite alternate;
-    }
-    @keyframes bgDrift {
-      from { transform: translate(-50%, -50%) scale(1); }
-      to   { transform: translate(-52%, -48%) scale(1.03); }
-    }
-    .ink-line {
-      width: 1px; height: 0;
-      background: var(--ink);
-      margin: 0 auto 3rem;
-      animation: lineGrow 1.4s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
-    }
-    @keyframes lineGrow { to { height: 80px; } }
-    .hero-title {
-      font-family: 'IM Fell English', serif;
-      font-size: clamp(3.5rem, 10vw, 8rem);
-      font-weight: 400;
-      letter-spacing: -0.02em;
-      line-height: 0.9;
-      text-align: center;
-      opacity: 0;
-      transform: translateY(30px);
-      animation: fadeUp 1s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
-    }
-    .hero-title em { font-style: italic; color: var(--muted); }
-    .hero-sub {
-      font-size: clamp(0.85rem, 2vw, 1.1rem);
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-top: 1.5rem;
-      opacity: 0;
-      animation: fadeUp 1s cubic-bezier(0.16,1,0.3,1) 0.9s forwards;
-    }
-    .scroll-hint {
-      position: absolute;
-      bottom: 2.5rem; left: 50%;
-      transform: translateX(-50%);
-      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
-      opacity: 0;
-      animation: fadeUp 1s ease 1.4s forwards;
-      color: var(--muted);
-      font-size: 0.7rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-    }
-    .scroll-hint span {
-      width: 1px; height: 40px;
-      background: var(--muted);
-      animation: scrollPulse 2s ease-in-out infinite;
-    }
-    @keyframes scrollPulse {
-      0%,100% { opacity:0.3; transform:scaleY(1); }
-      50% { opacity:1; transform:scaleY(0.6); }
-    }
-    @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+    /* ── CORNER MARKS ── */
+    .cm{position:fixed;width:18px;height:18px;pointer-events:none;z-index:10;opacity:0.13}
+    .cm.tl{top:1.4rem;left:1.4rem;border-top:1px solid var(--ink);border-left:1px solid var(--ink)}
+    .cm.tr{top:1.4rem;right:1.4rem;border-top:1px solid var(--ink);border-right:1px solid var(--ink)}
+    .cm.bl{bottom:1.4rem;left:1.4rem;border-bottom:1px solid var(--ink);border-left:1px solid var(--ink)}
+    .cm.br{bottom:1.4rem;right:1.4rem;border-bottom:1px solid var(--ink);border-right:1px solid var(--ink)}
 
-    /* ─── GALLERY ─── */
-    .gallery-section {
-      padding: 4rem 2rem 6rem;
-      max-width: 1400px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
+    /* ── HERO ── */
+    .hero{
+      min-height:100vh;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      position:relative;overflow:hidden;padding:2rem;z-index:1;
     }
-    .section-label {
-      display: flex; align-items: center; gap: 1.5rem;
-      margin-bottom: 4rem;
-      opacity: 0; transform: translateY(20px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
+    .hero-bg{
+      position:absolute;
+      font-family:'IM Fell English',serif;
+      font-size:clamp(8rem,20vw,18rem);
+      color:transparent;
+      -webkit-text-stroke:1px rgba(10,8,6,0.05);
+      letter-spacing:-0.05em;user-select:none;white-space:nowrap;
+      top:50%;left:50%;transform:translate(-50%,-50%);
+      pointer-events:none;
+      animation:bgDrift 20s ease-in-out infinite alternate;
     }
-    .section-label.visible { opacity:1; transform:translateY(0); }
-    .section-label::before, .section-label::after {
-      content:''; flex:1; height:1px;
-      background: var(--ink); opacity:0.2;
+    @keyframes bgDrift{
+      from{transform:translate(-50%,-50%) scale(1)}
+      to{transform:translate(-52%,-48%) scale(1.03)}
     }
-    .section-label span {
-      font-size: 0.7rem; letter-spacing: 0.4em;
-      text-transform: uppercase; color: var(--muted); white-space: nowrap;
+    /* ambient blobs */
+    .blob{
+      position:absolute;border-radius:50%;pointer-events:none;
+      filter:blur(55px);opacity:0.035;
+      animation:blobMove var(--d,18s) ease-in-out infinite alternate;
     }
-    .ig-grid {
-      columns: 1; column-gap: 2rem;
-    }
-    @media (min-width: 640px)  { .ig-grid { columns: 2; } }
-    @media (min-width: 1024px) { .ig-grid { columns: 3; } }
-
-    /* ─── POST ITEM ─── */
-    .ig-item {
-      break-inside: avoid;
-      margin-bottom: 2.5rem;
-      opacity: 0; transform: translateY(40px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-      position: relative;
-    }
-    .ig-item.visible { opacity:1; transform:translateY(0); }
-
-    .post-wrapper {
-      position: relative;
-      transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
-    }
-    .post-wrapper:hover {
-      transform: translateY(-4px) rotate(-0.3deg);
-    }
-    .post-wrapper::before {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      border: 1px solid transparent;
-      border-radius: 4px;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      pointer-events: none;
-      z-index: 2;
-    }
-    .post-wrapper:hover::before {
-      border-color: rgba(10,8,6,0.15);
-      box-shadow: 4px 6px 20px rgba(10,8,6,0.12), -1px -1px 0 rgba(10,8,6,0.05);
+    @keyframes blobMove{
+      from{transform:translate(0,0)}
+      to{transform:translate(var(--tx,20px),var(--ty,-20px))}
     }
 
-    /* pin effect on hover */
-    .post-wrapper::after {
-      content: '';
-      position: absolute;
-      top: -6px; left: 50%;
-      transform: translateX(-50%) scaleY(0);
-      width: 4px; height: 12px;
-      background: var(--muted);
-      border-radius: 2px 2px 0 0;
-      z-index: 3;
-      transition: transform 0.2s ease 0.05s, opacity 0.2s ease;
-      opacity: 0;
-      transform-origin: bottom center;
+    .ink-line{width:1px;height:0;background:var(--ink);margin:0 auto 3rem;animation:lineGrow 1.4s cubic-bezier(0.16,1,0.3,1) 0.35s forwards}
+    @keyframes lineGrow{to{height:80px}}
+
+    .hero-title{
+      font-family:'IM Fell English',serif;
+      font-size:clamp(3.5rem,10vw,8rem);
+      font-weight:400;letter-spacing:-0.02em;line-height:0.9;text-align:center;
+      opacity:0;transform:translateY(28px);
+      animation:fadeUp 1s cubic-bezier(0.16,1,0.3,1) 0.65s forwards;
     }
-    .post-wrapper:hover::after {
-      transform: translateX(-50%) scaleY(1);
-      opacity: 0.5;
+    .hero-title em{font-style:italic;color:var(--muted)}
+    .hero-sub{
+      font-size:clamp(0.82rem,2vw,1.05rem);letter-spacing:0.35em;
+      text-transform:uppercase;color:var(--muted);margin-top:1.5rem;
+      opacity:0;animation:fadeUp 1s cubic-bezier(0.16,1,0.3,1) 0.95s forwards;
+    }
+    .scroll-hint{
+      position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);
+      display:flex;flex-direction:column;align-items:center;gap:0.5rem;
+      opacity:0;animation:fadeUp 1s ease 1.45s forwards;
+      color:var(--muted);font-size:0.68rem;letter-spacing:0.3em;text-transform:uppercase;
+    }
+    .scroll-hint span{width:1px;height:38px;background:var(--muted);animation:scPulse 2s ease-in-out infinite}
+    @keyframes scPulse{0%,100%{opacity:0.3}50%{opacity:1}}
+    @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+
+    /* ── GALLERY ── */
+    .gallery-section{padding:4rem 2rem 6rem;max-width:1400px;margin:0 auto;position:relative;z-index:1}
+    .sec-label{
+      display:flex;align-items:center;gap:1.5rem;margin-bottom:4rem;
+      opacity:0;transform:translateY(18px);
+      transition:opacity 0.8s ease,transform 0.8s ease;
+    }
+    .sec-label.visible{opacity:1;transform:translateY(0)}
+    .sec-label::before,.sec-label::after{content:'';flex:1;height:1px;background:var(--ink);opacity:0.18}
+    .sec-label span{font-size:0.68rem;letter-spacing:0.4em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+
+    .ig-grid{columns:1;column-gap:2rem}
+    @media(min-width:640px){.ig-grid{columns:2}}
+    @media(min-width:1024px){.ig-grid{columns:3}}
+
+    /* ── POST ── */
+    .ig-item{
+      break-inside:avoid;margin-bottom:2.5rem;
+      opacity:0;transform:translateY(46px) rotate(0.25deg);
+      transition:opacity 0.65s ease,transform 0.65s cubic-bezier(0.16,1,0.3,1);
+      position:relative;
+    }
+    .ig-item.visible{opacity:1;transform:translateY(0) rotate(0deg)}
+
+    .pw{
+      position:relative;
+      transition:transform 0.38s cubic-bezier(0.16,1,0.3,1),box-shadow 0.38s ease;
+    }
+    .pw:hover{
+      transform:translateY(-5px) rotate(-0.35deg) scale(1.008);
+      box-shadow:5px 10px 28px rgba(10,8,6,0.11);
+    }
+    /* tape piece */
+    .pw::before{
+      content:'';position:absolute;
+      top:-7px;left:50%;
+      transform:translateX(-50%) rotate(-1.2deg) scaleY(0);
+      width:42px;height:13px;
+      background:rgba(10,8,6,0.1);border-radius:1px;
+      z-index:3;pointer-events:none;
+      transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+      transform-origin:bottom center;
+    }
+    .pw:hover::before{transform:translateX(-50%) rotate(-1.2deg) scaleY(1)}
+
+    /* number badge */
+    .pnum{
+      position:absolute;top:-11px;right:-9px;
+      width:24px;height:24px;
+      background:var(--ink);color:var(--paper);
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'IM Fell English',serif;font-size:0.6rem;font-style:italic;
+      z-index:10;pointer-events:none;
+      opacity:0;transform:scale(0.5) rotate(-12deg);
+      transition:opacity 0.22s ease,transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .pw:hover .pnum{opacity:1;transform:scale(1) rotate(0)}
+
+    /* ripple */
+    .ripple{
+      position:absolute;border-radius:50%;
+      background:rgba(10,8,6,0.06);
+      pointer-events:none;transform:scale(0);
+      animation:rip 0.6s ease-out forwards;z-index:20;
+    }
+    @keyframes rip{to{transform:scale(5);opacity:0}}
+    .pw.clicked{animation:bounce 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards}
+    @keyframes bounce{
+      0%{transform:scale(1)}
+      30%{transform:scale(0.97) rotate(0.4deg)}
+      65%{transform:scale(1.025) rotate(-0.25deg)}
+      100%{transform:scale(1) rotate(0)}
     }
 
-    /* post number badge */
-    .post-number {
-      position: absolute;
-      top: -10px; right: -10px;
-      width: 28px; height: 28px;
-      background: var(--ink);
-      color: var(--paper);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'IM Fell English', serif;
-      font-size: 0.65rem;
-      font-style: italic;
-      z-index: 10;
-      opacity: 0;
-      transform: scale(0.6) rotate(-10deg);
-      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-      pointer-events: none;
-    }
-    .post-wrapper:hover .post-number {
-      opacity: 1;
-      transform: scale(1) rotate(0deg);
-    }
+    .ig-item blockquote{border-radius:2px!important;box-shadow:0 2px 18px rgba(10,8,6,0.05)!important}
 
-    /* ink splatter on click */
-    .post-wrapper.clicked {
-      animation: inkPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    /* ── FOOTER ── */
+    footer{border-top:1px solid rgba(10,8,6,0.08);padding:3rem 2rem;text-align:center;position:relative;z-index:1}
+    .fn{font-family:'IM Fell English',serif;font-size:1.75rem;font-style:italic;color:var(--muted);margin-bottom:0.5rem}
+    .fig{
+      font-size:0.72rem;letter-spacing:0.3em;text-transform:uppercase;
+      color:var(--muted);opacity:0.55;text-decoration:none;
+      transition:opacity 0.18s,letter-spacing 0.28s;
     }
-    @keyframes inkPop {
-      0%   { transform: scale(1); }
-      40%  { transform: scale(0.97) rotate(0.5deg); }
-      70%  { transform: scale(1.02) rotate(-0.3deg); }
-      100% { transform: scale(1) rotate(0deg); }
-    }
-
-    /* click ripple */
-    .ink-ripple {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(10,8,6,0.08);
-      pointer-events: none;
-      transform: scale(0);
-      animation: ripple-expand 0.6s ease-out forwards;
-      z-index: 20;
-    }
-    @keyframes ripple-expand {
-      to { transform: scale(4); opacity: 0; }
-    }
-
-    .ig-item blockquote {
-      border-radius: 2px !important;
-      box-shadow: 0 2px 20px rgba(10,8,6,0.06) !important;
-    }
-
-    /* ─── FOOTER ─── */
-    footer {
-      border-top: 1px solid rgba(10,8,6,0.1);
-      padding: 3rem 2rem; text-align: center;
-      position: relative; z-index: 1;
-    }
-    .footer-name { font-family:'IM Fell English',serif; font-size:1.8rem; font-style:italic; color:var(--muted); margin-bottom:0.5rem; }
-    .footer-ig {
-      font-size:0.75rem; letter-spacing:0.3em;
-      text-transform:uppercase; color:var(--muted);
-      opacity:0.6; text-decoration:none;
-      transition: opacity 0.2s ease, letter-spacing 0.3s ease;
-    }
-    .footer-ig:hover { opacity:1; letter-spacing: 0.45em; }
-
-    /* ─── INK BLOT DECORATION ─── */
-    .ink-blot {
-      position: fixed;
-      pointer-events: none;
-      z-index: 9995;
-      opacity: 0;
-      animation: blot-appear 2s ease forwards;
-    }
-    @keyframes blot-appear {
-      0%   { opacity: 0; transform: scale(0) rotate(var(--rot)); }
-      20%  { opacity: 0.06; transform: scale(1) rotate(var(--rot)); }
-      100% { opacity: 0.04; transform: scale(1) rotate(var(--rot)); }
-    }
+    .fig:hover{opacity:1;letter-spacing:0.44em}
   </style>
 </head>
 <body>
-  <div class="ink-drop"></div>
 
-  <!-- custom ink cursor -->
-  <div id="cursor-container">
-    <div id="cursor-nib">
-      <svg width="24" height="36" viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- pen nib shape -->
-        <path id="nib-body" d="M12 2 L20 14 L12 34 L4 14 Z" fill="#0a0806" opacity="0.9"/>
-        <path d="M12 34 L10 28 L12 30 L14 28 Z" fill="#0a0806"/>
-        <!-- ink drop hanging from nib, animates when idle -->
-        <circle id="ink-drop-cursor" cx="12" cy="34" r="0" fill="#0a0806" opacity="0.8">
-          <animate attributeName="r" values="0;2.5;2.5;0" keyTimes="0;0.3;0.85;1"
-            dur="3s" repeatCount="indefinite" begin="2s"/>
-          <animate attributeName="cy" values="34;34;38;42" keyTimes="0;0.3;0.85;1"
-            dur="3s" repeatCount="indefinite" begin="2s"/>
-          <animate attributeName="opacity" values="0;0.9;0.7;0" keyTimes="0;0.3;0.85;1"
-            dur="3s" repeatCount="indefinite" begin="2s"/>
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="ld-title">Molly's <em>Art</em></div>
+    <div class="ld-nib">
+      <svg width="36" height="82" viewBox="0 0 36 82" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+        <path d="M18 3 L30 24 L18 52 L6 24 Z" fill="#f5f0e8" opacity="0.82"/>
+        <path d="M18 52 L15 43 L18 47 L21 43 Z" fill="#f5f0e8"/>
+        <line x1="18" y1="3" x2="18" y2="0" stroke="#f5f0e8" stroke-width="1.5" opacity="0.35"/>
+        <!-- drip animates down -->
+        <circle cx="18" cy="52" r="0" fill="#f5f0e8">
+          <animate attributeName="r"   values="0;3.5;3.5;0"      keyTimes="0;0.25;0.78;1" dur="1.4s" repeatCount="indefinite" begin="0.4s"/>
+          <animate attributeName="cy"  values="52;52;72;86"       keyTimes="0;0.25;0.78;1" dur="1.4s" repeatCount="indefinite" begin="0.4s"/>
+          <animate attributeName="opacity" values="0;0.9;0.6;0"  keyTimes="0;0.25;0.78;1" dur="1.4s" repeatCount="indefinite" begin="0.4s"/>
         </circle>
       </svg>
     </div>
+    <div class="ld-bar-wrap"><div class="ld-bar" id="ld-bar"></div></div>
+    <div class="ld-label">Loading works…</div>
   </div>
 
-  <div class="corner-mark tl"></div>
-  <div class="corner-mark tr"></div>
-  <div class="corner-mark bl"></div>
-  <div class="corner-mark br"></div>
+  <!-- DEV BANNER -->
+  <div id="dev-banner">
+    <span style="opacity:0.45">Site by</span>
+    <a href="https://portfolio-vsml.onrender.com" target="_blank" rel="noopener">7develops</a>
+    <span class="dot">●</span>
+    <span style="opacity:0.45">Want a site like this?</span>
+    <a href="https://portfolio-vsml.onrender.com/#contact" target="_blank" rel="noopener">Get in touch ↗</a>
+    <button id="banner-close" aria-label="close">✕</button>
+  </div>
 
+  <!-- CURSOR SVG — instant, no smoothing, no canvas -->
+  <svg id="cur" width="22" height="52" viewBox="0 0 22 52" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;transition:none">
+    <!-- pen barrel -->
+    <rect x="8.5" y="0" width="5" height="14" rx="1.2" fill="#0a0806"/>
+    <!-- nib -->
+    <path d="M11 12 L17 26 L11 42 L5 26 Z" fill="#0a0806"/>
+    <!-- nib slit -->
+    <line x1="11" y1="26" x2="11" y2="42" stroke="#f5f0e8" stroke-width="0.7" opacity="0.45"/>
+    <!-- tip dot -->
+    <circle cx="11" cy="42" r="1.2" fill="#0a0806"/>
+    <!-- ink drop — animated by JS class -->
+    <circle id="cur-drop" cx="11" cy="50" r="0" fill="#0a0806"/>
+  </svg>
+
+  <div class="cm tl"></div><div class="cm tr"></div>
+  <div class="cm bl"></div><div class="cm br"></div>
+
+  <!-- HERO -->
   <section class="hero">
-    <div class="hero-bg-text">INK</div>
+    <div class="hero-bg">INK</div>
+    <div class="blob" style="width:380px;height:380px;background:#0a0806;top:5%;left:-8%;--d:22s;--tx:28px;--ty:-18px"></div>
+    <div class="blob" style="width:260px;height:260px;background:#0a0806;bottom:12%;right:-6%;--d:16s;--tx:-18px;--ty:22px"></div>
     <div class="ink-line"></div>
     <h1 class="hero-title">Molly's<br><em>Art</em></h1>
     <p class="hero-sub">Ink &amp; Illustration</p>
     <div class="scroll-hint"><span></span>scroll</div>
   </section>
 
+  <!-- GALLERY -->
   <section class="gallery-section">
-    <div class="section-label"><span>Latest Works</span></div>
-    <div class="ig-grid" id="ig-grid">
-      <!-- posts injected by JS below -->
-    </div>
+    <div class="sec-label"><span>Latest Works</span></div>
+    <div class="ig-grid" id="ig-grid"></div>
   </section>
 
   <footer>
-    <div class="footer-name">Molly</div>
-    <a class="footer-ig" href="https://www.instagram.com/molly_ina_trolly/" target="_blank">@molly_ina_trolly ↗</a>
+    <div class="fn">Molly</div>
+    <a class="fig" href="https://www.instagram.com/molly_ina_trolly/" target="_blank">@molly_ina_trolly ↗</a>
   </footer>
 
-  <script>
-    /* ─── POST URLS ─── */
-    const posts = [
-      "https://www.instagram.com/p/DTYJ1rADFE1/",
-      "https://www.instagram.com/p/DYKZOSCDGKL/",
-      "https://www.instagram.com/p/DYKZHYLDOk3/",
-      "https://www.instagram.com/p/DYI1y12iPzO/",
-      "https://www.instagram.com/p/DYISqVVDNjU/",
-      "https://www.instagram.com/p/DYBAS7miDuc/",
-      "https://www.instagram.com/p/DX70ANPIwTJ/",
-      "https://www.instagram.com/p/DX7z7xBIngX/",
-      "https://www.instagram.com/p/DX7yJmHjMWW/",
-      "https://www.instagram.com/p/DWB2_kuDPXO/",
-      "https://www.instagram.com/p/DWB2NfFjEXv/",
-      "https://www.instagram.com/p/DVohCEfjOXD/",
-      "https://www.instagram.com/p/DUJBikeDOJB/",
-      "https://www.instagram.com/p/DUJBcFDDCT3/",
-      "https://www.instagram.com/p/DT-8M4wjJ-R/",
-      "https://www.instagram.com/p/DTxtAG5DFpX/",
-      "https://www.instagram.com/p/DTxrC_eDI-N/",
-      "https://www.instagram.com/p/DTYLzBmjOTs/",
-      "https://www.instagram.com/p/DTYK-bjjJIL/",
-      "https://www.instagram.com/p/DTYKr2BDL7p/",
-      "https://www.instagram.com/p/DTYKXJCDMbS/",
-      "https://www.instagram.com/p/DTYKOqWDDSK/",
-      "https://www.instagram.com/p/DTYJlfsDLeA/",
-      "https://www.instagram.com/p/DTYJYzrDCpd/",
-      "https://www.instagram.com/p/DTYJGkCDNvQ/",
-      "https://www.instagram.com/p/DTYI42BDCiK/",
-      "https://www.instagram.com/p/DTYIUQljIXC/",
-      "https://www.instagram.com/p/DTYIAfwjEiJ/",
-      "https://www.instagram.com/p/DTYH1AXDLPQ/",
-      "https://www.instagram.com/p/DTYHb9nDDDD/",
-      "https://www.instagram.com/p/DTYHPsTjJdH/",
-      "https://www.instagram.com/p/DTYG8ZojOu8/",
-      "https://www.instagram.com/p/DTYGTKMDApz/",
-      "https://www.instagram.com/p/DTYGOCqDMXt/",
-      "https://www.instagram.com/p/DTYGIkQjF_p/",
-      "https://www.instagram.com/p/DTYGA92DAl8/",
-      "https://www.instagram.com/p/DTYF6ELDNQ4/",
-      "https://www.instagram.com/p/DTYFzzTjJVs/",
-      "https://www.instagram.com/p/DTYFrzdDEQ6/",
-      "https://www.instagram.com/p/DTYFa4ZDKDI/",
-      "https://www.instagram.com/p/DTYFS3ijI9D/",
-      "https://www.instagram.com/p/DTYFASCDIim/",
-      "https://www.instagram.com/p/DTYExoojM13/",
-      "https://www.instagram.com/p/DTYEnfMjBmR/",
-      "https://www.instagram.com/p/DTYEXxJDD_I/",
-      "https://www.instagram.com/p/DTYELhpjC95/",
-      "https://www.instagram.com/p/DTYD95jjKFA/",
-      "https://www.instagram.com/p/DTYDZXVDH2w/"
-    ];
+<script>
+/* ── LOADER ── */
+const loader = document.getElementById('loader');
+const ldBar  = document.getElementById('ld-bar');
+let prog = 0;
+const progInt = setInterval(() => {
+  prog += Math.random() * 13;
+  if (prog > 91) prog = 91;
+  ldBar.style.width = prog + '%';
+}, 110);
 
-    /* ─── BUILD GRID ─── */
-    const grid = document.getElementById('ig-grid');
-    const delays = [0, 0.1, 0.2, 0.3, 0.4];
-    posts.forEach((url, i) => {
-      const item = document.createElement('div');
-      item.className = 'ig-item';
-      item.style.transitionDelay = delays[i % 5] + 's';
+function hideLoader() {
+  clearInterval(progInt);
+  ldBar.style.transition = 'width 0.28s ease';
+  ldBar.style.width = '100%';
+  setTimeout(() => {
+    loader.classList.add('out');
+    const banner = document.getElementById('dev-banner');
+    banner.classList.add('show');
+    document.body.classList.add('banner-up');
+    setTimeout(() => loader.remove(), 800);
+  }, 320);
+}
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'post-wrapper';
+let fontsOk = false, timeOk = false;
+function tryHide() { if (fontsOk && timeOk) hideLoader(); }
+document.fonts.ready.then(() => { fontsOk = true; tryHide(); });
+setTimeout(() => { timeOk = true; tryHide(); }, 1700);
 
-      const num = document.createElement('div');
-      num.className = 'post-number';
-      num.textContent = i + 1;
+document.getElementById('banner-close').addEventListener('click', () => {
+  const b = document.getElementById('dev-banner');
+  b.style.transition = 'opacity 0.28s,transform 0.28s';
+  b.style.opacity = '0'; b.style.transform = 'translateY(-100%)';
+  document.body.classList.remove('banner-up');
+  setTimeout(() => b.remove(), 300);
+});
 
-      const bq = document.createElement('blockquote');
-      bq.className = 'instagram-media';
-      bq.setAttribute('data-instgrm-captioned', '');
-      bq.setAttribute('data-instgrm-permalink', url);
-      bq.setAttribute('data-instgrm-version', '14');
-      bq.style.cssText = 'width:100%;max-width:100%;min-width:unset;';
+/* ── CURSOR — direct, no smoothing ── */
+const cur     = document.getElementById('cur');
+const curDrop = document.getElementById('cur-drop');
+let curX = -100, curY = -100;
 
-      /* click animation + ripple */
-      wrapper.addEventListener('click', (e) => {
-        wrapper.classList.remove('clicked');
-        void wrapper.offsetWidth;
-        wrapper.classList.add('clicked');
-        wrapper.addEventListener('animationend', () => wrapper.classList.remove('clicked'), { once: true });
+/* move cursor exactly with mouse — tip of nib is at (11, 42) inside the SVG
+   so offset so tip = pointer position */
+document.addEventListener('mousemove', e => {
+  curX = e.clientX; curY = e.clientY;
+  cur.style.transform = `translate(${curX - 11}px,${curY - 42}px)`;
+}, { passive: true });
 
-        const ripple = document.createElement('div');
-        ripple.className = 'ink-ripple';
-        const rect = wrapper.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height);
-        ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size/2}px;top:${e.clientY - rect.top - size/2}px;`;
-        wrapper.appendChild(ripple);
-        ripple.addEventListener('animationend', () => ripple.remove());
-
-        spawnSplat(e.clientX, e.clientY);
-      });
-
-      wrapper.appendChild(num);
-      wrapper.appendChild(bq);
-      item.appendChild(wrapper);
-      grid.appendChild(item);
-    });
-
-    /* ─── SCROLL REVEAL ─── */
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          observer.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-
-    document.querySelectorAll('.ig-item, .section-label').forEach(el => observer.observe(el));
-
-    /* ─── INSTAGRAM EMBED (lazy per viewport) ─── */
-    let embedProcessed = false;
-    function loadInstagram() {
-      if (document.querySelector('script[src*="instagram.com/embed"]')) {
-        if (window.instgrm) window.instgrm.Embeds.process();
-        return;
-      }
-      const s = document.createElement('script');
-      s.async = true;
-      s.src = '//www.instagram.com/embed.js';
-      s.onload = () => {
-        if (window.instgrm) window.instgrm.Embeds.process();
-        embedProcessed = true;
-      };
-      document.body.appendChild(s);
+/* drip animation on hover */
+let dropAnim = null;
+function startDrip() {
+  if (dropAnim) return;
+  let cy = 44, r = 0, growing = true, frame = 0;
+  dropAnim = setInterval(() => {
+    frame++;
+    if (growing) {
+      r = Math.min(r + 0.25, 3.2);
+      cy += 0.6;
+      if (r >= 3.2) growing = false;
+    } else {
+      r  = Math.max(r - 0.15, 0);
+      cy += 1.8;
     }
-
-    /* trigger load once user scrolls toward gallery */
-    const gallerySection = document.querySelector('.gallery-section');
-    const galleryObserver = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        loadInstagram();
-        galleryObserver.disconnect();
-      }
-    }, { rootMargin: '400px' });
-    galleryObserver.observe(gallerySection);
-
-    /* re-process as new posts scroll into view */
-    const igItemObserver = new IntersectionObserver((entries) => {
-      const anyVisible = entries.some(e => e.isIntersecting);
-      if (anyVisible && window.instgrm && embedProcessed) {
-        window.instgrm.Embeds.process();
-      }
-    }, { rootMargin: '200px' });
-    document.querySelectorAll('.ig-item').forEach(el => igItemObserver.observe(el));
-
-    /* ─── INK CURSOR ─── */
-    const cursorContainer = document.getElementById('cursor-container');
-    const nibEl = document.getElementById('cursor-nib');
-    let mx = -100, my = -100;
-    let cx = -100, cy = -100;
-    let trail = [];
-    let lastTrailTime = 0;
-    let dripsLeft = 0;
-    let dripInterval = null;
-    let speed = 0;
-    let lastX = 0, lastY = 0;
-
-    document.addEventListener('mousemove', e => {
-      mx = e.clientX; my = e.clientY;
-      speed = Math.hypot(e.clientX - lastX, e.clientY - lastY);
-      lastX = e.clientX; lastY = e.clientY;
-
-      const now = Date.now();
-      if (now - lastTrailTime > 18) {
-        spawnTrail(mx, my, Math.min(speed * 0.1, 3));
-        lastTrailTime = now;
-      }
-    });
-
-    function spawnTrail(x, y, r = 2) {
-      if (r < 0.5) return;
-      const t = document.createElement('div');
-      t.className = 'ink-trail';
-      const size = r * 2;
-      t.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
-      document.body.appendChild(t);
-      t.addEventListener('animationend', () => t.remove());
+    curDrop.setAttribute('r',  r);
+    curDrop.setAttribute('cy', cy);
+    curDrop.setAttribute('opacity', Math.min(r / 3.2, 1));
+    if (r <= 0 && !growing) {
+      cy = 44; r = 0; growing = true; /* loop */
     }
+  }, 16);
+}
+function stopDrip() {
+  clearInterval(dropAnim); dropAnim = null;
+  curDrop.setAttribute('r', 0);
+}
 
-    function spawnDrip(x, y) {
-      const d = document.createElement('div');
-      d.className = 'drip-particle';
-      const size = 3 + Math.random() * 4;
-      d.style.cssText = `width:${size}px;height:${size}px;left:${x + (Math.random()-0.5)*8}px;top:${y}px;`;
-      document.body.appendChild(d);
-      d.addEventListener('animationend', () => d.remove());
-    }
+/* splat on click */
+function spawnSplat(x, y) {
+  const el = document.createElement('div');
+  el.className = 'splat';
+  const sz = 26 + Math.random() * 22;
+  /* random blob polygon */
+  const pts = Array.from({length:7}, (_,i) => {
+    const a = (i / 7) * Math.PI * 2;
+    const rr = 8 + Math.random() * 9;
+    return `${12 + Math.cos(a)*rr},${12 + Math.sin(a)*rr}`;
+  }).join(' ');
+  el.innerHTML = `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24">
+    <polygon points="${pts}" fill="#0a0806" opacity="0.7"/>
+    <circle cx="${3+Math.random()*5}" cy="${3+Math.random()*5}" r="${0.8+Math.random()*1.8}" fill="#0a0806" opacity="0.45"/>
+    <circle cx="${15+Math.random()*7}" cy="${16+Math.random()*5}" r="${0.6+Math.random()*1.4}" fill="#0a0806" opacity="0.38"/>
+  </svg>`;
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
 
-    function spawnSplat(x, y) {
-      const s = document.createElement('div');
-      s.className = 'ink-splat';
-      const size = 30 + Math.random() * 20;
-      s.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;`;
-      s.innerHTML = `<svg viewBox="0 0 60 60" width="${size}" height="${size}">
-        <ellipse cx="30" cy="30" rx="${18+Math.random()*8}" ry="${14+Math.random()*8}" fill="#0a0806" opacity="0.7"/>
-        <ellipse cx="${20+Math.random()*20}" cy="${20+Math.random()*20}" rx="${4+Math.random()*5}" ry="${3+Math.random()*4}" fill="#0a0806" opacity="0.5"/>
-        <ellipse cx="${10+Math.random()*10}" cy="${35+Math.random()*10}" rx="${2+Math.random()*3}" ry="${2+Math.random()*3}" fill="#0a0806" opacity="0.4"/>
-        <ellipse cx="${40+Math.random()*15}" cy="${15+Math.random()*15}" rx="${2+Math.random()*4}" ry="${1+Math.random()*3}" fill="#0a0806" opacity="0.4"/>
-      </svg>`;
-      document.body.appendChild(s);
-      s.addEventListener('animationend', () => s.remove());
-    }
+document.addEventListener('click', e => spawnSplat(e.clientX, e.clientY));
 
-    /* smooth cursor follow */
-    function animateCursor() {
-      cx += (mx - cx) * 0.18;
-      cy += (my - cy) * 0.18;
-      cursorContainer.style.transform = `translate(${cx}px, ${cy}px)`;
+/* ── BUILD GRID ── */
+const posts = [
+  "https://www.instagram.com/p/DTYJ1rADFE1/",
+  "https://www.instagram.com/p/DYKZOSCDGKL/",
+  "https://www.instagram.com/p/DYKZHYLDOk3/",
+  "https://www.instagram.com/p/DYI1y12iPzO/",
+  "https://www.instagram.com/p/DYISqVVDNjU/",
+  "https://www.instagram.com/p/DYBAS7miDuc/",
+  "https://www.instagram.com/p/DX70ANPIwTJ/",
+  "https://www.instagram.com/p/DX7z7xBIngX/",
+  "https://www.instagram.com/p/DX7yJmHjMWW/",
+  "https://www.instagram.com/p/DWB2_kuDPXO/",
+  "https://www.instagram.com/p/DWB2NfFjEXv/",
+  "https://www.instagram.com/p/DVohCEfjOXD/",
+  "https://www.instagram.com/p/DUJBikeDOJB/",
+  "https://www.instagram.com/p/DUJBcFDDCT3/",
+  "https://www.instagram.com/p/DT-8M4wjJ-R/",
+  "https://www.instagram.com/p/DTxtAG5DFpX/",
+  "https://www.instagram.com/p/DTxrC_eDI-N/",
+  "https://www.instagram.com/p/DTYLzBmjOTs/",
+  "https://www.instagram.com/p/DTYK-bjjJIL/",
+  "https://www.instagram.com/p/DTYKr2BDL7p/",
+  "https://www.instagram.com/p/DTYKXJCDMbS/",
+  "https://www.instagram.com/p/DTYKOqWDDSK/",
+  "https://www.instagram.com/p/DTYJlfsDLeA/",
+  "https://www.instagram.com/p/DTYJYzrDCpd/",
+  "https://www.instagram.com/p/DTYJGkCDNvQ/",
+  "https://www.instagram.com/p/DTYI42BDCiK/",
+  "https://www.instagram.com/p/DTYIUQljIXC/",
+  "https://www.instagram.com/p/DTYIAfwjEiJ/",
+  "https://www.instagram.com/p/DTYH1AXDLPQ/",
+  "https://www.instagram.com/p/DTYHb9nDDDD/",
+  "https://www.instagram.com/p/DTYHPsTjJdH/",
+  "https://www.instagram.com/p/DTYG8ZojOu8/",
+  "https://www.instagram.com/p/DTYGTKMDApz/",
+  "https://www.instagram.com/p/DTYGOCqDMXt/",
+  "https://www.instagram.com/p/DTYGIkQjF_p/",
+  "https://www.instagram.com/p/DTYGA92DAl8/",
+  "https://www.instagram.com/p/DTYF6ELDNQ4/",
+  "https://www.instagram.com/p/DTYFzzTjJVs/",
+  "https://www.instagram.com/p/DTYFrzdDEQ6/",
+  "https://www.instagram.com/p/DTYFa4ZDKDI/",
+  "https://www.instagram.com/p/DTYFS3ijI9D/",
+  "https://www.instagram.com/p/DTYFASCDIim/",
+  "https://www.instagram.com/p/DTYExoojM13/",
+  "https://www.instagram.com/p/DTYEnfMjBmR/",
+  "https://www.instagram.com/p/DTYEXxJDD_I/",
+  "https://www.instagram.com/p/DTYELhpjC95/",
+  "https://www.instagram.com/p/DTYD95jjKFA/",
+  "https://www.instagram.com/p/DTYDZXVDH2w/"
+];
 
-      /* tilt nib toward direction */
-      const dx = mx - cx, dy = my - cy;
-      const angle = Math.atan2(dy, dx) * (180/Math.PI) - 90;
-      nibEl.style.transform = `translate(-50%, -8%) rotate(${angle}deg)`;
+const grid = document.getElementById('ig-grid');
+posts.forEach((url, i) => {
+  const item = document.createElement('div');
+  item.className = 'ig-item';
+  item.style.transitionDelay = (i % 5) * 0.1 + 's';
 
-      requestAnimationFrame(animateCursor);
-    }
-    animateCursor();
+  const pw = document.createElement('div');
+  pw.className = 'pw';
 
-    /* random drips when hovering over posts */
-    document.querySelectorAll('.post-wrapper').forEach(el => {
-      el.addEventListener('mouseenter', () => {
-        dripInterval = setInterval(() => spawnDrip(mx, my + 5), 180);
-      });
-      el.addEventListener('mouseleave', () => {
-        clearInterval(dripInterval);
-      });
-    });
+  const num = document.createElement('div');
+  num.className = 'pnum';
+  num.textContent = i + 1;
 
-    /* occasional idle drip from nib */
-    setInterval(() => {
-      if (Math.random() > 0.6) spawnDrip(cx, cy + 10);
-    }, 1200);
+  const bq = document.createElement('blockquote');
+  bq.className = 'instagram-media';
+  bq.setAttribute('data-instgrm-captioned','');
+  bq.setAttribute('data-instgrm-permalink', url);
+  bq.setAttribute('data-instgrm-version','14');
+  bq.style.cssText = 'width:100%;max-width:100%;min-width:unset;';
 
-  </script>
+  /* hover → drip */
+  pw.addEventListener('mouseenter', startDrip);
+  pw.addEventListener('mouseleave', stopDrip);
+
+  /* click → bounce + ripple + splat */
+  pw.addEventListener('click', e => {
+    pw.classList.remove('clicked');
+    void pw.offsetWidth;
+    pw.classList.add('clicked');
+    pw.addEventListener('animationend', () => pw.classList.remove('clicked'), {once:true});
+
+    const rip = document.createElement('div');
+    rip.className = 'ripple';
+    const rect = pw.getBoundingClientRect();
+    const sz = Math.max(rect.width, rect.height);
+    rip.style.cssText = `width:${sz}px;height:${sz}px;left:${e.clientX-rect.left-sz/2}px;top:${e.clientY-rect.top-sz/2}px`;
+    pw.appendChild(rip);
+    rip.addEventListener('animationend', () => rip.remove());
+  });
+
+  pw.appendChild(num);
+  pw.appendChild(bq);
+  item.appendChild(pw);
+  grid.appendChild(item);
+});
+
+/* ── SCROLL REVEAL ── */
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('visible');revObs.unobserve(e.target);} });
+}, { threshold:0.06, rootMargin:'0px 0px -30px 0px' });
+document.querySelectorAll('.ig-item,.sec-label').forEach(el => revObs.observe(el));
+
+/* ── INSTAGRAM LAZY LOAD ── */
+let igLoaded = false;
+function loadIG() {
+  if (igLoaded) return; igLoaded = true;
+  const s = document.createElement('script');
+  s.async = true; s.src = '//www.instagram.com/embed.js';
+  s.onload = () => window.instgrm && window.instgrm.Embeds.process();
+  document.body.appendChild(s);
+}
+const igTrig = new IntersectionObserver(e => {
+  if(e[0].isIntersecting){loadIG();igTrig.disconnect();}
+},{rootMargin:'400px'});
+igTrig.observe(document.querySelector('.gallery-section'));
+
+const igItemObs = new IntersectionObserver(entries => {
+  if(entries.some(e=>e.isIntersecting) && window.instgrm) window.instgrm.Embeds.process();
+},{rootMargin:'200px'});
+document.querySelectorAll('.ig-item').forEach(el=>igItemObs.observe(el));
+</script>
 </body>
 </html>
