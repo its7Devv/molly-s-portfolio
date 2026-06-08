@@ -273,11 +273,68 @@
 
     /* ── PARALLAX TILT vars ── */
     .pw{transition:transform 0.12s ease,box-shadow 0.35s ease}
+
+    /* scroll progress line */
+    #progress-line{
+      position:fixed;left:0;top:0;width:2px;height:0%;
+      background:var(--ink);opacity:0.2;z-index:4000;pointer-events:none;
+    }
+
+    /* floating ink drops */
+    .ink-float{
+      position:fixed;border-radius:50%;background:var(--ink);
+      pointer-events:none;z-index:0;opacity:0;
+      animation:floatUp var(--dur,14s) ease-in-out var(--del,0s) infinite;
+    }
+    @keyframes floatUp{
+      0%  {opacity:0;transform:translateY(110vh) scale(0.5)}
+      12% {opacity:var(--op,0.045)}
+      88% {opacity:var(--op,0.045)}
+      100%{opacity:0;transform:translateY(-15vh) scale(1.1)}
+    }
+
+    /* char hover wiggle */
+    .hero-title .char{
+      display:inline-block;cursor:default;
+      transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),color 0.15s;
+    }
+    .hero-title .char:hover{
+      transform:translateY(-8px) rotate(-4deg) scale(1.2);
+      color:var(--muted);
+    }
+
+    /* marquee divider */
+    .marquee-wrap{
+      overflow:hidden;
+      border-top:1px solid rgba(10,8,6,0.06);
+      border-bottom:1px solid rgba(10,8,6,0.06);
+      padding:9px 0;position:relative;z-index:1;background:var(--paper);
+    }
+    .marquee-track{
+      display:flex;gap:2.5rem;white-space:nowrap;width:max-content;
+      animation:mq 24s linear infinite;
+    }
+    .marquee-track span{
+      font-family:'IM Fell English',serif;font-style:italic;
+      font-size:0.76rem;letter-spacing:0.22em;color:var(--muted);opacity:0.45;text-transform:uppercase;
+    }
+    .marquee-track .dot{font-style:normal;opacity:0.2;font-size:0.45rem;vertical-align:middle}
+    @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+    /* scan line on reveal */
+    .ig-item.visible .pw::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,rgba(10,8,6,0.07),transparent);
+      transform:scaleX(0);transform-origin:left;
+      animation:scan 0.55s ease 0.35s forwards;
+    }
+    @keyframes scan{to{transform:scaleX(1)}}
   </style>
 </head>
 <body>
 
   <!-- LOADER -->
+  <div id="progress-line"></div>
   <div id="loader">
     <div class="ld-title">Molly's <em>Art</em></div>
     <div class="ld-nib">
@@ -334,6 +391,11 @@
   </section>
 
   <!-- GALLERY -->
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <span>Ink</span><span class="dot">●</span><span>Illustration</span><span class="dot">●</span><span>Original Works</span><span class="dot">●</span><span>Hand Drawn</span><span class="dot">●</span><span>Molly's Art</span><span class="dot">●</span><span>Ink</span><span class="dot">●</span><span>Illustration</span><span class="dot">●</span><span>Original Works</span><span class="dot">●</span><span>Hand Drawn</span><span class="dot">●</span><span>Molly's Art</span><span class="dot">●</span><span>Ink</span><span class="dot">●</span><span>Illustration</span><span class="dot">●</span><span>Original Works</span><span class="dot">●</span><span>Hand Drawn</span><span class="dot">●</span><span>Molly's Art</span><span class="dot">●</span><span>Ink</span><span class="dot">●</span><span>Illustration</span><span class="dot">●</span><span>Original Works</span><span class="dot">●</span><span>Hand Drawn</span><span class="dot">●</span><span>Molly's Art</span><span class="dot">●</span>
+    </div>
+  </div>
   <section class="gallery-section">
     <div class="sec-label"><span>Latest Works</span></div>
     <div class="ig-grid" id="ig-grid"></div>
@@ -557,6 +619,47 @@ const igItemObs = new IntersectionObserver(entries => {
   if(entries.some(e=>e.isIntersecting) && window.instgrm) window.instgrm.Embeds.process();
 },{rootMargin:'200px'});
 document.querySelectorAll('.ig-item').forEach(el=>igItemObs.observe(el));
+
+/* ── SCROLL PROGRESS LINE ── */
+const progressLine = document.getElementById('progress-line');
+window.addEventListener('scroll', () => {
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
+  progressLine.style.height = pct + '%';
+}, { passive: true });
+
+/* ── FLOATING INK DROPS ── */
+const drops = [
+  {size:6, left:8,  dur:16, del:0,   op:0.04},
+  {size:4, left:22, dur:21, del:3,   op:0.03},
+  {size:9, left:38, dur:18, del:7,   op:0.035},
+  {size:5, left:55, dur:14, del:1.5, op:0.04},
+  {size:7, left:70, dur:20, del:5,   op:0.03},
+  {size:4, left:84, dur:17, del:9,   op:0.045},
+  {size:6, left:93, dur:22, del:4,   op:0.03},
+];
+drops.forEach(d => {
+  const el = document.createElement('div');
+  el.className = 'ink-float';
+  el.style.cssText = `width:${d.size}px;height:${d.size}px;left:${d.left}%;--dur:${d.dur}s;--del:${d.del}s;--op:${d.op}`;
+  document.body.appendChild(el);
+});
+
+/* ── COUNT-UP for post stat ── */
+const countEl = document.getElementById('post-count');
+const countObs = new IntersectionObserver(entries => {
+  if (!entries[0].isIntersecting) return;
+  countObs.disconnect();
+  let n = 0;
+  const target = posts.length;
+  const step = () => {
+    n = Math.min(n + Math.ceil((target - n) / 8 + 1), target);
+    countEl.textContent = n;
+    if (n < target) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}, { threshold: 0.5 });
+countObs.observe(countEl);
 </script>
 </body>
 </html>
