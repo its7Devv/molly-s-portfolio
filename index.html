@@ -7,17 +7,16 @@
   <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--ink:#0a0806;--paper:#f5f0e8;--muted:#6b5f52}
+    :root{--ink:#0a0806;--paper:#f5f0e8;--muted:#6b5f52;--ink-rgb:10,8,6}
     html{scroll-behavior:smooth}
     body{
       background:var(--paper);color:var(--ink);
       font-family:'Cormorant Garamond',serif;
-      overflow-x:hidden;
-      padding-top:30px; /* banner */
+      overflow-x:hidden;padding-top:30px;
     }
     body.banner-gone{padding-top:0}
 
-    /* subtle paper grain only — no lines */
+    /* grain */
     body::before{
       content:'';position:fixed;inset:0;
       background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
@@ -47,30 +46,33 @@
     #loader{
       position:fixed;inset:0;background:var(--ink);z-index:9999;
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;
-      transition:opacity 0.8s ease,transform 0.8s cubic-bezier(0.16,1,0.3,1);
+      transition:opacity 0.9s ease,transform 0.9s cubic-bezier(0.16,1,0.3,1);
     }
-    #loader.out{opacity:0;pointer-events:none;transform:translateY(-10px)}
+    #loader.out{opacity:0;pointer-events:none;transform:translateY(-12px)}
     .ld-title{
-      font-family:'IM Fell English',serif;
-      font-size:clamp(2rem,7vw,4rem);color:var(--paper);
+      font-family:'IM Fell English',serif;font-size:clamp(2rem,7vw,4rem);color:var(--paper);
       opacity:0;transform:translateY(12px);
       animation:up 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
     }
     .ld-title em{font-style:italic;opacity:0.45}
     .ld-nib{opacity:0;animation:up 0.6s ease 0.5s forwards}
-    .ld-nib svg{overflow:visible}
     .ld-track{
       width:100px;height:1px;background:rgba(245,240,232,0.1);
-      position:relative;overflow:hidden;
-      opacity:0;animation:up 0.4s ease 0.7s forwards;
+      position:relative;overflow:hidden;opacity:0;animation:up 0.4s ease 0.7s forwards;
     }
     .ld-fill{position:absolute;top:0;left:0;height:100%;width:0;background:var(--paper);transition:width 0.09s linear}
     .ld-sub{
       font-size:0.6rem;letter-spacing:0.38em;text-transform:uppercase;
-      color:rgba(245,240,232,0.28);
-      opacity:0;animation:up 0.4s ease 0.8s forwards;
+      color:rgba(245,240,232,0.28);opacity:0;animation:up 0.4s ease 0.8s forwards;
     }
     @keyframes up{to{opacity:1;transform:translateY(0)}}
+
+    /* ── SCROLL PROGRESS ── */
+    #prog{
+      position:fixed;left:0;top:0;width:2px;z-index:5500;
+      background:var(--ink);opacity:0.2;height:0;pointer-events:none;
+      transition:height 0.05s linear;
+    }
 
     /* ── CORNER MARKS ── */
     .cm{position:fixed;width:16px;height:16px;pointer-events:none;z-index:10;opacity:0.1}
@@ -85,44 +87,41 @@
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       position:relative;overflow:hidden;padding:2rem;z-index:1;
     }
+    /* ink canvas behind hero */
+    #ink-canvas{position:absolute;inset:0;pointer-events:none;opacity:0.45}
+
     .hero-bg-word{
-      position:absolute;
-      font-family:'IM Fell English',serif;
-      font-size:clamp(8rem,22vw,20rem);
-      color:transparent;
-      -webkit-text-stroke:1px rgba(10,8,6,0.045);
+      position:absolute;font-family:'IM Fell English',serif;
+      font-size:clamp(8rem,22vw,20rem);color:transparent;
+      -webkit-text-stroke:1px rgba(10,8,6,0.04);
       letter-spacing:-0.05em;user-select:none;white-space:nowrap;
-      top:50%;left:50%;transform:translate(-50%,-50%);
-      pointer-events:none;
-      will-change:transform;
+      top:50%;left:50%;will-change:transform;pointer-events:none;
     }
     .blob{
       position:absolute;border-radius:50%;pointer-events:none;
       filter:blur(60px);opacity:0.03;
       animation:blobDrift var(--d,18s) ease-in-out infinite alternate;
-      will-change:transform;
     }
     @keyframes blobDrift{from{transform:translate(0,0)}to{transform:translate(var(--tx,20px),var(--ty,-20px))}}
 
-    .ink-line{
-      width:1px;height:0;background:var(--ink);margin:0 auto 3rem;
-      animation:lineGrow 1.4s cubic-bezier(0.16,1,0.3,1) 0.35s forwards;
-    }
+    .ink-line{width:1px;height:0;background:var(--ink);margin:0 auto 3rem;animation:lineGrow 1.4s cubic-bezier(0.16,1,0.3,1) 0.35s forwards}
     @keyframes lineGrow{to{height:80px}}
 
-    /* letter-by-letter title */
+    /* char-by-char title */
     .hero-title{
       font-family:'IM Fell English',serif;
       font-size:clamp(3.5rem,10vw,8rem);
-      font-weight:400;letter-spacing:-0.02em;line-height:0.9;
-      text-align:center;
+      font-weight:400;letter-spacing:-0.02em;line-height:0.9;text-align:center;
     }
     .hero-title .char{
-      display:inline-block;
+      display:inline-block;cursor:default;
       opacity:0;transform:translateY(24px) rotate(2deg);
       animation:charIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),color 0.15s;
     }
+    .hero-title .char:hover{transform:translateY(-8px) rotate(-4deg) scale(1.2);color:var(--muted)}
     .hero-title em .char{font-style:italic;color:var(--muted)}
+    .hero-title em .char:hover{color:var(--ink)}
     @keyframes charIn{to{opacity:1;transform:translateY(0) rotate(0)}}
 
     .hero-sub{
@@ -130,24 +129,16 @@
       text-transform:uppercase;color:var(--muted);margin-top:1.8rem;
       opacity:0;animation:fadeUp 1s ease 1.2s forwards;
     }
-
-    /* post count stat */
     .hero-stat{
-      margin-top:3rem;
-      display:flex;flex-direction:column;align-items:center;gap:0.3rem;
+      margin-top:3rem;display:flex;flex-direction:column;align-items:center;gap:0.3rem;
       opacity:0;animation:fadeUp 1s ease 1.4s forwards;
     }
     .hero-stat-num{
-      font-family:'IM Fell English',serif;
-      font-size:clamp(2rem,5vw,3.5rem);
-      color:var(--ink);line-height:1;
-      opacity:0.12;
+      font-family:'IM Fell English',serif;font-size:clamp(2rem,5vw,3.5rem);
+      line-height:1;opacity:0.12;
     }
-    .hero-stat-label{
-      font-size:0.62rem;letter-spacing:0.4em;text-transform:uppercase;color:var(--muted);opacity:0.6;
-    }
+    .hero-stat-label{font-size:0.62rem;letter-spacing:0.4em;text-transform:uppercase;color:var(--muted);opacity:0.6}
 
-    /* scroll indicator — simple, centred */
     .scroll-hint{
       position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
       display:flex;flex-direction:column;align-items:center;gap:6px;
@@ -156,71 +147,93 @@
     }
     .scroll-hint-line{
       width:1px;height:32px;background:var(--muted);opacity:0.4;
-      animation:linePulse 2s ease-in-out infinite;
-      transform-origin:top;
+      animation:linePulse 2s ease-in-out infinite;transform-origin:top;
     }
     @keyframes linePulse{0%,100%{transform:scaleY(1);opacity:0.2}50%{transform:scaleY(0.55);opacity:0.6}}
     @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
 
+    /* ── MARQUEE ── */
+    .marquee-wrap{
+      overflow:hidden;border-top:1px solid rgba(10,8,6,0.06);
+      border-bottom:1px solid rgba(10,8,6,0.06);
+      padding:9px 0;position:relative;z-index:1;background:var(--paper);
+    }
+    .marquee-track{
+      display:flex;gap:2.5rem;white-space:nowrap;width:max-content;
+      animation:mq 26s linear infinite;
+    }
+    .marquee-track span{font-family:'IM Fell English',serif;font-style:italic;font-size:0.76rem;letter-spacing:0.22em;color:var(--muted);opacity:0.45;text-transform:uppercase}
+    .marquee-track .dot{font-style:normal;opacity:0.2;font-size:0.45rem;vertical-align:middle}
+    @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
     /* ── GALLERY ── */
     .gallery-section{padding:5rem 2rem 6rem;max-width:1400px;margin:0 auto;position:relative;z-index:1}
 
-    /* animated section header */
-    .sec-label{
-      display:flex;align-items:center;gap:1.5rem;margin-bottom:4rem;
-      opacity:0;transform:translateY(16px);
-      transition:opacity 0.9s ease,transform 0.9s ease;
+    /* filter bar */
+    .filter-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      flex-wrap:wrap;gap:1rem;
+      margin-bottom:3rem;
+      opacity:0;transform:translateY(14px);
+      transition:opacity 0.8s ease,transform 0.8s ease;
     }
-    .sec-label.visible{opacity:1;transform:translateY(0)}
-    .sec-label::before,.sec-label::after{content:'';flex:1;height:1px;background:var(--ink);opacity:0.15}
-    .sec-label span{font-size:0.66rem;letter-spacing:0.42em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+    .filter-bar.visible{opacity:1;transform:translateY(0)}
+    .filter-left{font-size:0.66rem;letter-spacing:0.42em;text-transform:uppercase;color:var(--muted)}
+    .filter-right{display:flex;gap:0.5rem}
+    .view-btn{
+      background:none;border:1px solid rgba(10,8,6,0.15);
+      color:var(--muted);font-family:'Cormorant Garamond',serif;
+      font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;
+      padding:5px 14px;cursor:pointer;
+      transition:background 0.2s,color 0.2s,border-color 0.2s;
+    }
+    .view-btn:hover,.view-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
-    .ig-grid{columns:1;column-gap:2rem}
+    /* grid layouts */
+    .ig-grid{columns:1;column-gap:2rem;transition:all 0.4s ease}
     @media(min-width:640px){.ig-grid{columns:2}}
     @media(min-width:1024px){.ig-grid{columns:3}}
+    .ig-grid.dense{columns:2!important}
+    @media(min-width:640px){.ig-grid.dense{columns:3!important}}
+    @media(min-width:1024px){.ig-grid.dense{columns:4!important}}
+    .ig-grid.single{columns:1!important;max-width:540px;margin:0 auto}
 
     /* ── POST CARD ── */
     .ig-item{
       break-inside:avoid;margin-bottom:2.5rem;position:relative;
       opacity:0;transform:translateY(50px);
-      transition:opacity 0.7s ease,transform 0.7s cubic-bezier(0.16,1,0.3,1);
+      transition:opacity 0.65s ease,transform 0.65s cubic-bezier(0.16,1,0.3,1);
     }
     .ig-item.visible{opacity:1;transform:translateY(0)}
 
     .pw{
       position:relative;
-      transition:box-shadow 0.35s ease;
-      transform-style:preserve-3d;
-      will-change:transform;
+      transition:transform 0.3s cubic-bezier(0.16,1,0.3,1),box-shadow 0.3s ease;
     }
     /* tape strip */
     .pw::before{
-      content:'';position:absolute;
-      top:-8px;left:50%;
+      content:'';position:absolute;top:-8px;left:50%;
       transform:translateX(-50%) rotate(-1deg) scaleY(0);
-      width:46px;height:14px;
-      background:rgba(10,8,6,0.09);border-radius:1px;
+      width:46px;height:14px;background:rgba(10,8,6,0.09);border-radius:1px;
       z-index:3;pointer-events:none;
-      transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
-      transform-origin:bottom;
+      transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);transform-origin:bottom;
     }
     .pw:hover::before{transform:translateX(-50%) rotate(-1deg) scaleY(1)}
-    .pw:hover{box-shadow:4px 10px 30px rgba(10,8,6,0.1),-2px -2px 0 rgba(10,8,6,0.03)}
+    .pw:hover{transform:translateY(-5px) rotate(-0.3deg);box-shadow:4px 10px 28px rgba(10,8,6,0.1)}
 
     /* number badge */
     .pnum{
       position:absolute;top:-11px;right:-9px;
       width:24px;height:24px;background:var(--ink);color:var(--paper);
-      border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
+      border-radius:50%;display:flex;align-items:center;justify-content:center;
       font-family:'IM Fell English',serif;font-size:0.58rem;font-style:italic;
       z-index:10;pointer-events:none;
       opacity:0;transform:scale(0.4) rotate(-12deg);
-      transition:opacity 0.2s ease,transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+      transition:opacity 0.2s,transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
     }
     .pw:hover .pnum{opacity:1;transform:scale(1) rotate(0)}
 
-    /* ink ripple on click */
+    /* ripple */
     .ripple{
       position:absolute;border-radius:50%;
       background:rgba(10,8,6,0.055);
@@ -228,14 +241,17 @@
       animation:rip 0.65s ease-out forwards;z-index:20;
     }
     @keyframes rip{to{transform:scale(5);opacity:0}}
-
     .pw.popped{animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
-    @keyframes pop{
-      0%{transform:scale(1)}
-      35%{transform:scale(0.97) rotate(0.3deg)}
-      65%{transform:scale(1.02) rotate(-0.2deg)}
-      100%{transform:scale(1) rotate(0)}
+    @keyframes pop{0%{transform:scale(1)}35%{transform:scale(0.97) rotate(0.3deg)}65%{transform:scale(1.02) rotate(-0.2deg)}100%{transform:scale(1) rotate(0)}}
+
+    /* scan line on reveal */
+    .ig-item.visible .pw::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,rgba(10,8,6,0.07),transparent);
+      transform:scaleX(0);transform-origin:left;
+      animation:scan 0.55s ease 0.35s forwards;
     }
+    @keyframes scan{to{transform:scaleX(1)}}
 
     /* ink splat */
     .splat{
@@ -249,92 +265,111 @@
       100%{opacity:0;transform:translate(-50%,-50%) scale(1.6)}
     }
 
-    .ig-item blockquote{border-radius:2px!important;box-shadow:0 1px 14px rgba(10,8,6,0.05)!important}
-
-    /* ── FOOTER ── */
-    footer{
-      border-top:1px solid rgba(10,8,6,0.07);
-      padding:3rem 2rem;text-align:center;position:relative;z-index:1;
-    }
-    .fn{
-      font-family:'IM Fell English',serif;font-size:1.7rem;font-style:italic;
-      color:var(--muted);margin-bottom:0.6rem;
-      opacity:0;transform:translateY(12px);
-      transition:opacity 0.8s ease,transform 0.8s ease;
-    }
-    .fn.visible{opacity:1;transform:translateY(0)}
-    .fig{
-      font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;
-      color:var(--muted);opacity:0.5;text-decoration:none;
-      display:inline-block;
-      transition:opacity 0.2s,letter-spacing 0.3s;
-    }
-    .fig:hover{opacity:1;letter-spacing:0.44em}
-
-    /* ── PARALLAX TILT vars ── */
-    .pw{transition:transform 0.12s ease,box-shadow 0.35s ease}
-
-    /* scroll progress line */
-    #progress-line{
-      position:fixed;left:0;top:0;width:2px;height:0%;
-      background:var(--ink);opacity:0.2;z-index:4000;pointer-events:none;
-    }
-
-    /* floating ink drops */
+    /* floating drops */
     .ink-float{
       position:fixed;border-radius:50%;background:var(--ink);
       pointer-events:none;z-index:0;opacity:0;
       animation:floatUp var(--dur,14s) ease-in-out var(--del,0s) infinite;
     }
     @keyframes floatUp{
-      0%  {opacity:0;transform:translateY(110vh) scale(0.5)}
-      12% {opacity:var(--op,0.045)}
-      88% {opacity:var(--op,0.045)}
+      0%{opacity:0;transform:translateY(110vh) scale(0.5)}
+      12%{opacity:var(--op,0.04)}
+      88%{opacity:var(--op,0.04)}
       100%{opacity:0;transform:translateY(-15vh) scale(1.1)}
     }
 
-    /* char hover wiggle */
-    .hero-title .char{
-      display:inline-block;cursor:default;
-      transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),color 0.15s;
+    /* ── LIGHTBOX ── */
+    #lightbox{
+      position:fixed;inset:0;z-index:9000;
+      background:rgba(10,8,6,0);
+      display:flex;align-items:center;justify-content:center;
+      pointer-events:none;
+      transition:background 0.35s ease;
     }
-    .hero-title .char:hover{
-      transform:translateY(-8px) rotate(-4deg) scale(1.2);
-      color:var(--muted);
+    #lightbox.open{background:rgba(10,8,6,0.88);pointer-events:all}
+    #lightbox-inner{
+      width:min(520px,92vw);
+      opacity:0;transform:scale(0.92) translateY(20px);
+      transition:opacity 0.35s ease,transform 0.35s cubic-bezier(0.16,1,0.3,1);
+      position:relative;
+    }
+    #lightbox.open #lightbox-inner{opacity:1;transform:scale(1) translateY(0)}
+    #lightbox-close{
+      position:absolute;top:-40px;right:0;
+      background:none;border:none;color:var(--paper);
+      font-size:1.4rem;cursor:pointer;opacity:0.6;
+      font-family:'IM Fell English',serif;
+      transition:opacity 0.15s;
+    }
+    #lightbox-close:hover{opacity:1}
+    #lightbox-nav{
+      position:absolute;top:50%;width:calc(100% + 80px);left:-40px;
+      transform:translateY(-50%);
+      display:flex;justify-content:space-between;pointer-events:none;
+    }
+    .lb-arrow{
+      background:rgba(245,240,232,0.08);border:1px solid rgba(245,240,232,0.15);
+      color:var(--paper);width:36px;height:36px;
+      border-radius:50%;cursor:pointer;pointer-events:all;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1rem;transition:background 0.15s;
+      font-family:serif;
+    }
+    .lb-arrow:hover{background:rgba(245,240,232,0.18)}
+    #lightbox-counter{
+      position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);
+      color:rgba(245,240,232,0.4);font-size:0.65rem;letter-spacing:0.3em;
+      text-transform:uppercase;white-space:nowrap;
     }
 
-    /* marquee divider */
-    .marquee-wrap{
-      overflow:hidden;
-      border-top:1px solid rgba(10,8,6,0.06);
-      border-bottom:1px solid rgba(10,8,6,0.06);
-      padding:9px 0;position:relative;z-index:1;background:var(--paper);
+    /* ── FOOTER ── */
+    footer{border-top:1px solid rgba(10,8,6,0.07);padding:3rem 2rem;text-align:center;position:relative;z-index:1}
+    .fn{
+      font-family:'IM Fell English',serif;font-size:1.7rem;font-style:italic;
+      color:var(--muted);margin-bottom:0.6rem;
+      opacity:0;transform:translateY(12px);transition:opacity 0.8s,transform 0.8s;
     }
-    .marquee-track{
-      display:flex;gap:2.5rem;white-space:nowrap;width:max-content;
-      animation:mq 24s linear infinite;
+    .fn.visible{opacity:1;transform:translateY(0)}
+    .fig{
+      font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;
+      color:var(--muted);opacity:0.5;text-decoration:none;display:inline-block;
+      transition:opacity 0.2s,letter-spacing 0.3s;
     }
-    .marquee-track span{
-      font-family:'IM Fell English',serif;font-style:italic;
-      font-size:0.76rem;letter-spacing:0.22em;color:var(--muted);opacity:0.45;text-transform:uppercase;
-    }
-    .marquee-track .dot{font-style:normal;opacity:0.2;font-size:0.45rem;vertical-align:middle}
-    @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    .fig:hover{opacity:1;letter-spacing:0.44em}
 
-    /* scan line on reveal */
-    .ig-item.visible .pw::after{
-      content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-      background:linear-gradient(90deg,transparent,rgba(10,8,6,0.07),transparent);
-      transform:scaleX(0);transform-origin:left;
-      animation:scan 0.55s ease 0.35s forwards;
+    /* ── EASTER EGG ── */
+    #egg{
+      position:fixed;bottom:1.5rem;right:1.5rem;z-index:5000;
+      width:32px;height:32px;border-radius:50%;
+      background:var(--ink);opacity:0.08;
+      cursor:pointer;border:none;
+      transition:opacity 0.2s,transform 0.2s;
     }
-    @keyframes scan{to{transform:scaleX(1)}}
+    #egg:hover{opacity:0.25;transform:scale(1.2)}
+
+    /* konami / shake */
+    @keyframes shake{
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-8px) rotate(-1deg)}
+      40%{transform:translateX(8px) rotate(1deg)}
+      60%{transform:translateX(-6px)}
+      80%{transform:translateX(6px)}
+    }
+    .shaking{animation:shake 0.5s ease}
+
+    .ig-item blockquote{border-radius:2px!important;box-shadow:0 1px 14px rgba(10,8,6,0.05)!important}
+
+    /* ── SOUND WAVE (purely decorative SVG in footer) ── */
+    .wave-svg{display:block;margin:1.5rem auto 0;opacity:0.12;width:120px}
+    .wave-svg .bar{
+      animation:waveBar 1.4s ease-in-out infinite alternate;
+      transform-origin:bottom;
+    }
   </style>
 </head>
 <body>
 
   <!-- LOADER -->
-  <div id="progress-line"></div>
   <div id="loader">
     <div class="ld-title">Molly's <em>Art</em></div>
     <div class="ld-nib">
@@ -342,9 +377,9 @@
         <path d="M16 3 L27 22 L16 50 L5 22 Z" fill="#f5f0e8" opacity="0.8"/>
         <path d="M16 50 L13 42 L16 46 L19 42 Z" fill="#f5f0e8"/>
         <circle cx="16" cy="50" r="0" fill="#f5f0e8">
-          <animate attributeName="r"       values="0;3.2;3.2;0"    keyTimes="0;0.22;0.75;1" dur="1.3s" repeatCount="indefinite" begin="0.3s"/>
-          <animate attributeName="cy"      values="50;50;70;82"     keyTimes="0;0.22;0.75;1" dur="1.3s" repeatCount="indefinite" begin="0.3s"/>
-          <animate attributeName="opacity" values="0;0.85;0.55;0"   keyTimes="0;0.22;0.75;1" dur="1.3s" repeatCount="indefinite" begin="0.3s"/>
+          <animate attributeName="r"       values="0;3.2;3.2;0"   keyTimes="0;0.22;0.75;1" dur="1.3s" repeatCount="indefinite" begin="0.3s"/>
+          <animate attributeName="cy"      values="50;50;70;82"    keyTimes="0;0.22;0.75;1" dur="1.3s" repeatCount="indefinite" begin="0.3s"/>
+          <animate attributeName="opacity" values="0;0.85;0.55;0"  keyTimes="0;0.22;0.75;1" dur="1.3s" repeatCount="indefinite" begin="0.3s"/>
         </circle>
       </svg>
     </div>
@@ -362,49 +397,91 @@
     <button id="banner-close">✕</button>
   </div>
 
+  <div id="prog"></div>
   <div class="cm tl"></div><div class="cm tr"></div>
   <div class="cm bl"></div><div class="cm br"></div>
 
+  <!-- LIGHTBOX -->
+  <div id="lightbox">
+    <div id="lightbox-inner">
+      <button id="lightbox-close">✕</button>
+      <div id="lightbox-nav">
+        <button class="lb-arrow" id="lb-prev">‹</button>
+        <button class="lb-arrow" id="lb-next">›</button>
+      </div>
+      <div id="lightbox-embed"></div>
+      <div id="lightbox-counter"></div>
+    </div>
+  </div>
+
   <!-- HERO -->
   <section class="hero" id="hero">
+    <canvas id="ink-canvas"></canvas>
     <div class="hero-bg-word" id="hero-bg-word">INK</div>
     <div class="blob" style="width:420px;height:420px;background:#0a0806;top:0%;left:-10%;--d:24s;--tx:32px;--ty:-20px"></div>
     <div class="blob" style="width:280px;height:280px;background:#0a0806;bottom:8%;right:-8%;--d:17s;--tx:-22px;--ty:26px"></div>
-
     <div class="ink-line"></div>
-
     <h1 class="hero-title" id="hero-title">
       <span id="line1"></span><br><em id="line2"></em>
     </h1>
-
     <p class="hero-sub">Ink &amp; Illustration</p>
-
     <div class="hero-stat">
       <div class="hero-stat-num" id="post-count">48</div>
       <div class="hero-stat-label">original works</div>
     </div>
-
     <div class="scroll-hint">
       <div class="scroll-hint-line"></div>
       scroll
     </div>
   </section>
 
-  <!-- GALLERY -->
+  <!-- MARQUEE -->
   <div class="marquee-wrap">
     <div class="marquee-track">
       <span>Ink</span><span class="dot">●</span><span>Illustration</span><span class="dot">●</span><span>Original Works</span><span class="dot">●</span><span>Hand Drawn</span><span class="dot">●</span><span>Molly's Art</span><span class="dot">●</span><span>Ink</span><span class="dot">●</span><span>Illustration</span><span class="dot">●</span><span>Original Works</span><span class="dot">●</span><span>Hand Drawn</span><span class="dot">●</span><span>Molly's Art</span><span class="dot">●</span><span>Ink</span><span class="dot">●</span><span>Illustration</span><span class="dot">●</span><span>Original Works</span><span class="dot">●</span><span>Hand Drawn</span><span class="dot">●</span><span>Molly's Art</span><span class="dot">●</span><span>Ink</span><span class="dot">●</span><span>Illustration</span><span class="dot">●</span><span>Original Works</span><span class="dot">●</span><span>Hand Drawn</span><span class="dot">●</span><span>Molly's Art</span><span class="dot">●</span>
     </div>
   </div>
+
+  <!-- GALLERY -->
   <section class="gallery-section">
-    <div class="sec-label"><span>Latest Works</span></div>
+    <div class="filter-bar" id="filter-bar">
+      <div class="filter-left">
+        <span id="visible-count">0</span> of 48 works
+      </div>
+      <div class="filter-right">
+        <button class="view-btn active" data-view="masonry">Masonry</button>
+        <button class="view-btn" data-view="dense">Dense</button>
+        <button class="view-btn" data-view="single">Single</button>
+      </div>
+    </div>
     <div class="ig-grid" id="ig-grid"></div>
   </section>
 
   <footer>
     <div class="fn" id="footer-name">Molly</div>
     <a class="fig" href="https://www.instagram.com/molly_ina_trolly/" target="_blank">@molly_ina_trolly ↗</a>
+    <!-- decorative wave -->
+    <svg class="wave-svg" viewBox="0 0 120 20" fill="none">
+      <rect class="bar" x="0"   y="8"  width="4" height="4"  fill="#0a0806" style="animation-delay:0s"/>
+      <rect class="bar" x="8"   y="5"  width="4" height="10" fill="#0a0806" style="animation-delay:0.1s"/>
+      <rect class="bar" x="16"  y="2"  width="4" height="16" fill="#0a0806" style="animation-delay:0.2s"/>
+      <rect class="bar" x="24"  y="6"  width="4" height="8"  fill="#0a0806" style="animation-delay:0.3s"/>
+      <rect class="bar" x="32"  y="1"  width="4" height="18" fill="#0a0806" style="animation-delay:0.15s"/>
+      <rect class="bar" x="40"  y="4"  width="4" height="12" fill="#0a0806" style="animation-delay:0.25s"/>
+      <rect class="bar" x="48"  y="7"  width="4" height="6"  fill="#0a0806" style="animation-delay:0.05s"/>
+      <rect class="bar" x="56"  y="3"  width="4" height="14" fill="#0a0806" style="animation-delay:0.35s"/>
+      <rect class="bar" x="64"  y="6"  width="4" height="8"  fill="#0a0806" style="animation-delay:0.1s"/>
+      <rect class="bar" x="72"  y="2"  width="4" height="16" fill="#0a0806" style="animation-delay:0.2s"/>
+      <rect class="bar" x="80"  y="5"  width="4" height="10" fill="#0a0806" style="animation-delay:0.3s"/>
+      <rect class="bar" x="88"  y="8"  width="4" height="4"  fill="#0a0806" style="animation-delay:0s"/>
+      <rect class="bar" x="96"  y="4"  width="4" height="12" fill="#0a0806" style="animation-delay:0.15s"/>
+      <rect class="bar" x="104" y="6"  width="4" height="8"  fill="#0a0806" style="animation-delay:0.25s"/>
+      <rect class="bar" x="112" y="3"  width="4" height="14" fill="#0a0806" style="animation-delay:0.05s"/>
+    </svg>
   </footer>
+
+  <!-- hidden easter egg dot -->
+  <button id="egg" title="✦"></button>
 
 <script>
 /* ── LOADER ── */
@@ -412,26 +489,20 @@ const loader = document.getElementById('loader');
 const ldFill = document.getElementById('ld-fill');
 let prog = 0;
 const progInt = setInterval(() => {
-  prog += Math.random() * 12;
-  if (prog > 90) prog = 90;
+  prog += Math.random() * 12; if (prog > 90) prog = 90;
   ldFill.style.width = prog + '%';
 }, 100);
-
 function hideLoader() {
   clearInterval(progInt);
-  ldFill.style.transition = 'width 0.3s ease';
-  ldFill.style.width = '100%';
-  setTimeout(() => {
-    loader.classList.add('out');
-    setTimeout(() => loader.remove(), 900);
-  }, 300);
+  ldFill.style.transition = 'width 0.3s ease'; ldFill.style.width = '100%';
+  setTimeout(() => { loader.classList.add('out'); setTimeout(() => loader.remove(), 900); }, 300);
 }
 let fontsOk = false, timeOk = false;
 function tryHide() { if (fontsOk && timeOk) hideLoader(); }
 document.fonts.ready.then(() => { fontsOk = true; tryHide(); });
 setTimeout(() => { timeOk = true; tryHide(); }, 1800);
 
-/* banner close */
+/* ── BANNER ── */
 document.getElementById('banner-close').addEventListener('click', () => {
   const b = document.getElementById('dev-banner');
   b.style.opacity = '0'; b.style.transform = 'translateY(-100%)';
@@ -439,89 +510,137 @@ document.getElementById('banner-close').addEventListener('click', () => {
   setTimeout(() => b.remove(), 300);
 });
 
-/* ── HERO TITLE letter-by-letter ── */
+/* ── SCROLL PROGRESS ── */
+const progEl = document.getElementById('prog');
+window.addEventListener('scroll', () => {
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  progEl.style.height = (total > 0 ? window.scrollY / total * 100 : 0) + '%';
+}, { passive: true });
+
+/* ── HERO PARALLAX ── */
+const heroBg = document.getElementById('hero-bg-word');
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  heroBg.style.transform = `translate(-50%, calc(-50% + ${y * 0.16}px)) scale(${1 + y * 0.0002})`;
+}, { passive: true });
+
+/* ── INK CANVAS (hero background blobs) ── */
+const canvas = document.getElementById('ink-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const blobs = Array.from({length: 6}, () => ({
+  x: Math.random(), y: Math.random(),
+  r: 40 + Math.random() * 80,
+  vx: (Math.random() - 0.5) * 0.0003,
+  vy: (Math.random() - 0.5) * 0.0003,
+}));
+
+function drawInkCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  blobs.forEach(b => {
+    b.x += b.vx; b.y += b.vy;
+    if (b.x < 0 || b.x > 1) b.vx *= -1;
+    if (b.y < 0 || b.y > 1) b.vy *= -1;
+    const grd = ctx.createRadialGradient(b.x * canvas.width, b.y * canvas.height, 0, b.x * canvas.width, b.y * canvas.height, b.r);
+    grd.addColorStop(0, 'rgba(10,8,6,0.06)');
+    grd.addColorStop(1, 'rgba(10,8,6,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(b.x * canvas.width, b.y * canvas.height, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  requestAnimationFrame(drawInkCanvas);
+}
+drawInkCanvas();
+
+/* ── HERO TITLE char-by-char ── */
 const words = [['M','o','l','l','y','\'','s'], ['A','r','t']];
 const line1 = document.getElementById('line1');
 const line2 = document.getElementById('line2');
 let delay = 0.65;
 words[0].forEach(ch => {
-  const s = document.createElement('span');
-  s.className = 'char';
+  const s = document.createElement('span'); s.className = 'char';
   s.textContent = ch === ' ' ? '\u00a0' : ch;
-  s.style.animationDelay = delay + 's';
-  line1.appendChild(s);
-  delay += 0.06;
+  s.style.animationDelay = delay + 's'; line1.appendChild(s); delay += 0.06;
 });
 delay += 0.1;
 words[1].forEach(ch => {
-  const s = document.createElement('span');
-  s.className = 'char';
-  s.textContent = ch;
-  s.style.animationDelay = delay + 's';
-  line2.appendChild(s);
-  delay += 0.07;
+  const s = document.createElement('span'); s.className = 'char';
+  s.textContent = ch; s.style.animationDelay = delay + 's';
+  line2.appendChild(s); delay += 0.07;
 });
-
-/* ── PARALLAX hero bg word on scroll ── */
-const heroBg = document.getElementById('hero-bg-word');
-window.addEventListener('scroll', () => {
-  const y = window.scrollY;
-  heroBg.style.transform = `translate(-50%, calc(-50% + ${y * 0.18}px)) scale(${1 + y * 0.0002})`;
-}, { passive: true });
 
 /* ── POSTS ── */
 const posts = [
-  "https://www.instagram.com/p/DTYJ1rADFE1/",
-  "https://www.instagram.com/p/DYKZOSCDGKL/",
-  "https://www.instagram.com/p/DYKZHYLDOk3/",
-  "https://www.instagram.com/p/DYI1y12iPzO/",
-  "https://www.instagram.com/p/DYISqVVDNjU/",
-  "https://www.instagram.com/p/DYBAS7miDuc/",
-  "https://www.instagram.com/p/DX70ANPIwTJ/",
-  "https://www.instagram.com/p/DX7z7xBIngX/",
-  "https://www.instagram.com/p/DX7yJmHjMWW/",
-  "https://www.instagram.com/p/DWB2_kuDPXO/",
-  "https://www.instagram.com/p/DWB2NfFjEXv/",
-  "https://www.instagram.com/p/DVohCEfjOXD/",
-  "https://www.instagram.com/p/DUJBikeDOJB/",
-  "https://www.instagram.com/p/DUJBcFDDCT3/",
-  "https://www.instagram.com/p/DT-8M4wjJ-R/",
-  "https://www.instagram.com/p/DTxtAG5DFpX/",
-  "https://www.instagram.com/p/DTxrC_eDI-N/",
-  "https://www.instagram.com/p/DTYLzBmjOTs/",
-  "https://www.instagram.com/p/DTYK-bjjJIL/",
-  "https://www.instagram.com/p/DTYKr2BDL7p/",
-  "https://www.instagram.com/p/DTYKXJCDMbS/",
-  "https://www.instagram.com/p/DTYKOqWDDSK/",
-  "https://www.instagram.com/p/DTYJlfsDLeA/",
-  "https://www.instagram.com/p/DTYJYzrDCpd/",
-  "https://www.instagram.com/p/DTYJGkCDNvQ/",
-  "https://www.instagram.com/p/DTYI42BDCiK/",
-  "https://www.instagram.com/p/DTYIUQljIXC/",
-  "https://www.instagram.com/p/DTYIAfwjEiJ/",
-  "https://www.instagram.com/p/DTYH1AXDLPQ/",
-  "https://www.instagram.com/p/DTYHb9nDDDD/",
-  "https://www.instagram.com/p/DTYHPsTjJdH/",
-  "https://www.instagram.com/p/DTYG8ZojOu8/",
-  "https://www.instagram.com/p/DTYGTKMDApz/",
-  "https://www.instagram.com/p/DTYGOCqDMXt/",
-  "https://www.instagram.com/p/DTYGIkQjF_p/",
-  "https://www.instagram.com/p/DTYGA92DAl8/",
-  "https://www.instagram.com/p/DTYF6ELDNQ4/",
-  "https://www.instagram.com/p/DTYFzzTjJVs/",
-  "https://www.instagram.com/p/DTYFrzdDEQ6/",
-  "https://www.instagram.com/p/DTYFa4ZDKDI/",
-  "https://www.instagram.com/p/DTYFS3ijI9D/",
-  "https://www.instagram.com/p/DTYFASCDIim/",
-  "https://www.instagram.com/p/DTYExoojM13/",
-  "https://www.instagram.com/p/DTYEnfMjBmR/",
-  "https://www.instagram.com/p/DTYEXxJDD_I/",
-  "https://www.instagram.com/p/DTYELhpjC95/",
-  "https://www.instagram.com/p/DTYD95jjKFA/",
-  "https://www.instagram.com/p/DTYDZXVDH2w/"
+  "https://www.instagram.com/p/DTYJ1rADFE1/","https://www.instagram.com/p/DYKZOSCDGKL/",
+  "https://www.instagram.com/p/DYKZHYLDOk3/","https://www.instagram.com/p/DYI1y12iPzO/",
+  "https://www.instagram.com/p/DYISqVVDNjU/","https://www.instagram.com/p/DYBAS7miDuc/",
+  "https://www.instagram.com/p/DX70ANPIwTJ/","https://www.instagram.com/p/DX7z7xBIngX/",
+  "https://www.instagram.com/p/DX7yJmHjMWW/","https://www.instagram.com/p/DWB2_kuDPXO/",
+  "https://www.instagram.com/p/DWB2NfFjEXv/","https://www.instagram.com/p/DVohCEfjOXD/",
+  "https://www.instagram.com/p/DUJBikeDOJB/","https://www.instagram.com/p/DUJBcFDDCT3/",
+  "https://www.instagram.com/p/DT-8M4wjJ-R/","https://www.instagram.com/p/DTxtAG5DFpX/",
+  "https://www.instagram.com/p/DTxrC_eDI-N/","https://www.instagram.com/p/DTYLzBmjOTs/",
+  "https://www.instagram.com/p/DTYK-bjjJIL/","https://www.instagram.com/p/DTYKr2BDL7p/",
+  "https://www.instagram.com/p/DTYKXJCDMbS/","https://www.instagram.com/p/DTYKOqWDDSK/",
+  "https://www.instagram.com/p/DTYJlfsDLeA/","https://www.instagram.com/p/DTYJYzrDCpd/",
+  "https://www.instagram.com/p/DTYJGkCDNvQ/","https://www.instagram.com/p/DTYI42BDCiK/",
+  "https://www.instagram.com/p/DTYIUQljIXC/","https://www.instagram.com/p/DTYIAfwjEiJ/",
+  "https://www.instagram.com/p/DTYH1AXDLPQ/","https://www.instagram.com/p/DTYHb9nDDDD/",
+  "https://www.instagram.com/p/DTYHPsTjJdH/","https://www.instagram.com/p/DTYG8ZojOu8/",
+  "https://www.instagram.com/p/DTYGTKMDApz/","https://www.instagram.com/p/DTYGOCqDMXt/",
+  "https://www.instagram.com/p/DTYGIkQjF_p/","https://www.instagram.com/p/DTYGA92DAl8/",
+  "https://www.instagram.com/p/DTYF6ELDNQ4/","https://www.instagram.com/p/DTYFzzTjJVs/",
+  "https://www.instagram.com/p/DTYFrzdDEQ6/","https://www.instagram.com/p/DTYFa4ZDKDI/",
+  "https://www.instagram.com/p/DTYFS3ijI9D/","https://www.instagram.com/p/DTYFASCDIim/",
+  "https://www.instagram.com/p/DTYExoojM13/","https://www.instagram.com/p/DTYEnfMjBmR/",
+  "https://www.instagram.com/p/DTYEXxJDD_I/","https://www.instagram.com/p/DTYELhpjC95/",
+  "https://www.instagram.com/p/DTYD95jjKFA/","https://www.instagram.com/p/DTYDZXVDH2w/"
 ];
 
-/* ink splat on click anywhere */
+/* ── LIGHTBOX ── */
+const lightbox = document.getElementById('lightbox');
+const lbEmbed  = document.getElementById('lightbox-embed');
+const lbCounter= document.getElementById('lightbox-counter');
+let lbIndex = 0;
+
+function openLightbox(i) {
+  lbIndex = i;
+  renderLightbox();
+  lightbox.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  lightbox.classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(() => { lbEmbed.innerHTML = ''; }, 350);
+}
+function renderLightbox() {
+  lbEmbed.innerHTML = '';
+  const bq = document.createElement('blockquote');
+  bq.className = 'instagram-media';
+  bq.setAttribute('data-instgrm-permalink', posts[lbIndex]);
+  bq.setAttribute('data-instgrm-version', '14');
+  bq.style.cssText = 'width:100%;max-width:100%;min-width:unset;margin:0!important';
+  lbEmbed.appendChild(bq);
+  if (window.instgrm) window.instgrm.Embeds.process();
+  lbCounter.textContent = `${lbIndex + 1} of ${posts.length}`;
+}
+document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+document.getElementById('lb-prev').addEventListener('click', () => { lbIndex = (lbIndex - 1 + posts.length) % posts.length; renderLightbox(); });
+document.getElementById('lb-next').addEventListener('click', () => { lbIndex = (lbIndex + 1) % posts.length; renderLightbox(); });
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', e => {
+  if (!lightbox.classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') { lbIndex = (lbIndex - 1 + posts.length) % posts.length; renderLightbox(); }
+  if (e.key === 'ArrowRight') { lbIndex = (lbIndex + 1) % posts.length; renderLightbox(); }
+});
+
+/* ── INK SPLAT ── */
 function spawnSplat(x, y) {
   const el = document.createElement('div');
   el.className = 'splat';
@@ -532,30 +651,36 @@ function spawnSplat(x, y) {
     return `${12+Math.cos(a)*r},${12+Math.sin(a)*r}`;
   }).join(' ');
   el.innerHTML = `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24">
-    <polygon points="${pts}" fill="#0a0806" opacity="0.65"/>
-    <circle cx="${2+Math.random()*5}" cy="${4+Math.random()*4}" r="${0.7+Math.random()*1.6}" fill="#0a0806" opacity="0.4"/>
-    <circle cx="${16+Math.random()*6}" cy="${15+Math.random()*6}" r="${0.5+Math.random()*1.3}" fill="#0a0806" opacity="0.35"/>
-    <circle cx="${8+Math.random()*8}" cy="${18+Math.random()*4}" r="${0.4+Math.random()*1}" fill="#0a0806" opacity="0.3"/>
+    <polygon points="${pts}" fill="#0a0806" opacity="0.6"/>
+    <circle cx="${2+Math.random()*5}" cy="${4+Math.random()*4}" r="${0.7+Math.random()*1.5}" fill="#0a0806" opacity="0.38"/>
+    <circle cx="${16+Math.random()*6}" cy="${15+Math.random()*5}" r="${0.5+Math.random()*1.2}" fill="#0a0806" opacity="0.3"/>
   </svg>`;
   el.style.left = x+'px'; el.style.top = y+'px';
   document.body.appendChild(el);
   el.addEventListener('animationend', () => el.remove());
 }
-document.addEventListener('click', e => spawnSplat(e.clientX, e.clientY));
+document.addEventListener('click', e => {
+  if (!e.target.closest('#lightbox') && !e.target.closest('#dev-banner') && !e.target.closest('#egg'))
+    spawnSplat(e.clientX, e.clientY);
+});
 
-/* build grid */
+/* ── BUILD GRID ── */
 const grid = document.getElementById('ig-grid');
+let visibleCount = 0;
+const countDisplay = document.getElementById('visible-count');
+
 posts.forEach((url, i) => {
   const item = document.createElement('div');
   item.className = 'ig-item';
-  item.style.transitionDelay = (i % 4) * 0.08 + 's';
+  item.style.transitionDelay = (i % 4) * 0.07 + 's';
 
-  const pw = document.createElement('div');
-  pw.className = 'pw';
+  const pw = document.createElement('div'); pw.className = 'pw';
 
-  const num = document.createElement('div');
-  num.className = 'pnum';
-  num.textContent = i + 1;
+  const num = document.createElement('div'); num.className = 'pnum'; num.textContent = i + 1;
+
+  /* open lightbox on number badge click */
+  num.addEventListener('click', e => { e.stopPropagation(); openLightbox(i); });
+  num.style.cursor = 'pointer';
 
   const bq = document.createElement('blockquote');
   bq.className = 'instagram-media';
@@ -564,26 +689,10 @@ posts.forEach((url, i) => {
   bq.setAttribute('data-instgrm-version','14');
   bq.style.cssText = 'width:100%;max-width:100%;min-width:unset;';
 
-  /* 3D tilt on mouse move */
-  pw.addEventListener('mousemove', e => {
-    const r = pw.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width  - 0.5;
-    const y = (e.clientY - r.top)  / r.height - 0.5;
-    pw.style.transform = `perspective(600px) rotateY(${x*6}deg) rotateX(${-y*5}deg) translateY(-4px)`;
-  });
-  pw.addEventListener('mouseleave', () => {
-    pw.style.transform = '';
-  });
-
-  /* click: bounce + ripple */
   pw.addEventListener('click', e => {
-    pw.classList.remove('popped');
-    void pw.offsetWidth;
-    pw.classList.add('popped');
+    pw.classList.remove('popped'); void pw.offsetWidth; pw.classList.add('popped');
     pw.addEventListener('animationend', () => pw.classList.remove('popped'), {once:true});
-
-    const rip = document.createElement('div');
-    rip.className = 'ripple';
+    const rip = document.createElement('div'); rip.className = 'ripple';
     const rect = pw.getBoundingClientRect();
     const sz = Math.max(rect.width, rect.height);
     rip.style.cssText = `width:${sz}px;height:${sz}px;left:${e.clientX-rect.left-sz/2}px;top:${e.clientY-rect.top-sz/2}px`;
@@ -595,11 +704,30 @@ posts.forEach((url, i) => {
   item.appendChild(pw); grid.appendChild(item);
 });
 
-/* ── SCROLL REVEAL ── */
+/* ── VIEW SWITCHER ── */
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const v = btn.dataset.view;
+    grid.className = 'ig-grid' + (v === 'dense' ? ' dense' : v === 'single' ? ' single' : '');
+  });
+});
+
+/* ── SCROLL REVEAL + count ── */
 const revObs = new IntersectionObserver(entries => {
-  entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('visible');revObs.unobserve(e.target);} });
-}, { threshold:0.05, rootMargin:'0px 0px -20px 0px' });
-document.querySelectorAll('.ig-item,.sec-label,.fn').forEach(el => revObs.observe(el));
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      revObs.unobserve(e.target);
+      if (e.target.classList.contains('ig-item')) {
+        visibleCount++;
+        countDisplay.textContent = visibleCount;
+      }
+    }
+  });
+}, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+document.querySelectorAll('.ig-item,.filter-bar,.fn').forEach(el => revObs.observe(el));
 
 /* ── INSTAGRAM LAZY LOAD ── */
 let igLoaded = false;
@@ -610,56 +738,72 @@ function loadIG() {
   s.onload = () => window.instgrm && window.instgrm.Embeds.process();
   document.body.appendChild(s);
 }
-const igTrig = new IntersectionObserver(e => {
-  if(e[0].isIntersecting){loadIG();igTrig.disconnect();}
-},{rootMargin:'400px'});
+const igTrig = new IntersectionObserver(e => { if(e[0].isIntersecting){loadIG();igTrig.disconnect();} },{rootMargin:'400px'});
 igTrig.observe(document.querySelector('.gallery-section'));
-
 const igItemObs = new IntersectionObserver(entries => {
   if(entries.some(e=>e.isIntersecting) && window.instgrm) window.instgrm.Embeds.process();
 },{rootMargin:'200px'});
 document.querySelectorAll('.ig-item').forEach(el=>igItemObs.observe(el));
 
-/* ── SCROLL PROGRESS LINE ── */
-const progressLine = document.getElementById('progress-line');
-window.addEventListener('scroll', () => {
-  const total = document.documentElement.scrollHeight - window.innerHeight;
-  const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
-  progressLine.style.height = pct + '%';
-}, { passive: true });
-
-/* ── FLOATING INK DROPS ── */
-const drops = [
-  {size:6, left:8,  dur:16, del:0,   op:0.04},
-  {size:4, left:22, dur:21, del:3,   op:0.03},
-  {size:9, left:38, dur:18, del:7,   op:0.035},
-  {size:5, left:55, dur:14, del:1.5, op:0.04},
-  {size:7, left:70, dur:20, del:5,   op:0.03},
-  {size:4, left:84, dur:17, del:9,   op:0.045},
-  {size:6, left:93, dur:22, del:4,   op:0.03},
-];
-drops.forEach(d => {
-  const el = document.createElement('div');
-  el.className = 'ink-float';
-  el.style.cssText = `width:${d.size}px;height:${d.size}px;left:${d.left}%;--dur:${d.dur}s;--del:${d.del}s;--op:${d.op}`;
+/* ── FLOATING DROPS ── */
+[{s:6,l:8,d:16,dl:0,o:0.04},{s:4,l:22,d:21,dl:3,o:0.03},{s:9,l:38,d:18,dl:7,o:0.035},
+ {s:5,l:55,d:14,dl:1.5,o:0.04},{s:7,l:70,d:20,dl:5,o:0.03},{s:4,l:84,d:17,dl:9,o:0.045}]
+.forEach(d => {
+  const el = document.createElement('div'); el.className = 'ink-float';
+  el.style.cssText = `width:${d.s}px;height:${d.s}px;left:${d.l}%;--dur:${d.d}s;--del:${d.dl}s;--op:${d.o}`;
   document.body.appendChild(el);
 });
 
-/* ── COUNT-UP for post stat ── */
+/* ── COUNT-UP ── */
 const countEl = document.getElementById('post-count');
-const countObs = new IntersectionObserver(entries => {
+new IntersectionObserver(entries => {
   if (!entries[0].isIntersecting) return;
-  countObs.disconnect();
-  let n = 0;
-  const target = posts.length;
-  const step = () => {
-    n = Math.min(n + Math.ceil((target - n) / 8 + 1), target);
-    countEl.textContent = n;
-    if (n < target) requestAnimationFrame(step);
-  };
+  let n = 0; const target = posts.length;
+  const step = () => { n = Math.min(n + Math.ceil((target-n)/8+1), target); countEl.textContent = n; if(n<target) requestAnimationFrame(step); };
   requestAnimationFrame(step);
-}, { threshold: 0.5 });
-countObs.observe(countEl);
+}, { threshold: 0.5 }).observe(countEl);
+
+/* ── WAVE BARS animation ── */
+document.querySelectorAll('.wave-svg .bar').forEach((bar, i) => {
+  bar.style.animation = `waveBar ${0.8 + Math.random()*0.8}s ease-in-out ${i*0.06}s infinite alternate`;
+});
+const waveStyle = document.createElement('style');
+waveStyle.textContent = `@keyframes waveBar{from{transform:scaleY(0.3)}to{transform:scaleY(1)}}`;
+document.head.appendChild(waveStyle);
+
+/* ── EASTER EGG — click the dot 3x ── */
+let eggClicks = 0;
+document.getElementById('egg').addEventListener('click', () => {
+  eggClicks++;
+  if (eggClicks >= 3) {
+    eggClicks = 0;
+    document.querySelectorAll('.ig-item').forEach((item, i) => {
+      setTimeout(() => {
+        item.style.transform = `rotate(${(Math.random()-0.5)*6}deg) translateY(-${Math.random()*12}px)`;
+        item.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+        setTimeout(() => { item.style.transform = ''; }, 600);
+      }, i * 25);
+    });
+  }
+});
+
+/* ── KONAMI CODE ── */
+const konami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let ki = 0;
+document.addEventListener('keydown', e => {
+  if (e.key === konami[ki]) { ki++; if (ki === konami.length) { ki = 0; konamiActivate(); } }
+  else ki = 0;
+});
+function konamiActivate() {
+  document.querySelectorAll('.ig-item').forEach(item => {
+    item.classList.add('shaking');
+    item.addEventListener('animationend', () => item.classList.remove('shaking'), {once:true});
+  });
+  const flash = document.createElement('div');
+  flash.style.cssText = 'position:fixed;inset:0;background:#0a0806;opacity:0;z-index:8999;pointer-events:none;transition:opacity 0.15s';
+  document.body.appendChild(flash);
+  requestAnimationFrame(() => { flash.style.opacity = '0.3'; setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 300); }, 150); });
+}
 </script>
 </body>
 </html>
