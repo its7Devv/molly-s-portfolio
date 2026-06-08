@@ -46,9 +46,9 @@
       letter-spacing:0.2em;
       text-transform:uppercase;
       display:flex;align-items:center;justify-content:center;gap:0.7rem;
-      opacity:0;
-      transform:translateY(-100%);
-      transition:opacity 0.5s ease,transform 0.5s cubic-bezier(0.16,1,0.3,1);
+      opacity:1;
+      transform:translateY(0);
+      transition:opacity 0.28s ease,transform 0.28s ease;
     }
     #dev-banner.show{opacity:1;transform:translateY(0)}
     #dev-banner a{
@@ -65,7 +65,8 @@
       transition:color 0.15s;line-height:1;padding:4px;
     }
     #banner-close:hover{color:var(--paper)}
-    body.banner-up{padding-top:30px}
+    body{padding-top:30px}
+    body.banner-gone{padding-top:0}
 
     /* ── LOADER ── */
     #loader{
@@ -378,9 +379,7 @@ function hideLoader() {
   ldBar.style.width = '100%';
   setTimeout(() => {
     loader.classList.add('out');
-    const banner = document.getElementById('dev-banner');
-    banner.classList.add('show');
-    document.body.classList.add('banner-up');
+    /* banner already visible */
     setTimeout(() => loader.remove(), 800);
   }, 320);
 }
@@ -394,7 +393,7 @@ document.getElementById('banner-close').addEventListener('click', () => {
   const b = document.getElementById('dev-banner');
   b.style.transition = 'opacity 0.28s,transform 0.28s';
   b.style.opacity = '0'; b.style.transform = 'translateY(-100%)';
-  document.body.classList.remove('banner-up');
+  document.body.classList.add('banner-gone');
   setTimeout(() => b.remove(), 300);
 });
 
