@@ -365,9 +365,51 @@
       animation:waveBar 1.4s ease-in-out infinite alternate;
       transform-origin:bottom;
     }
+
+    /* ── SITE LOCK OVERLAY ── */
+    #site-lock{
+      position:fixed;inset:0;z-index:99999;
+      background:#0a0806;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6rem;
+    }
+    #lock-heart{opacity:0.9}
+    #lock-text{
+      font-family:'IM Fell English',serif;font-size:1.3rem;color:#f5f0e8;
+      letter-spacing:0.05em;
+    }
+    #lock-text span{font-style:italic;opacity:0.75}
+    #lock-status{
+      font-family:'Cormorant Garamond',serif;font-size:0.68rem;letter-spacing:0.4em;
+      text-transform:uppercase;color:#f5f0e8;opacity:0.4;
+    }
+    #lock-btn{
+      margin-top:0.8rem;
+      background:none;border:1px solid rgba(245,240,232,0.3);
+      color:#f5f0e8;font-family:'Cormorant Garamond',serif;
+      font-size:0.7rem;letter-spacing:0.25em;text-transform:uppercase;
+      padding:10px 22px;cursor:pointer;text-decoration:none;
+      display:inline-block;
+      transition:background 0.2s,color 0.2s,border-color 0.2s;
+    }
+    #lock-btn:hover{background:#f5f0e8;color:#0a0806;border-color:#f5f0e8}
+    body{overflow:hidden!important}
   </style>
 </head>
 <body>
+
+  <!-- ── SITE LOCK OVERLAY ── -->
+  <div id="site-lock">
+    <div id="lock-heart">
+      <svg width="64" height="58" viewBox="0 0 64 58" fill="none">
+        <path d="M32 54 C 8 38, 2 24, 2 14 C 2 5, 10 0, 18 0 C 25 0, 30 4, 32 10 C 34 4, 39 0, 46 0 C 54 0, 62 5, 62 14 C 62 24, 56 38, 32 54 Z"
+          fill="none" stroke="#ffffff" stroke-width="1.4"/>
+        <path d="M27 6 L36 22 L26 28 L38 46" stroke="#ffffff" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div id="lock-text">Site by <span>7Develops</span></div>
+    <div id="lock-status">Closed</div>
+    <a id="lock-btn" href="https://portfolio-vsml.onrender.com/" target="_blank" rel="noopener">Visit 7Develops ↗</a>
+  </div>
 
   <!-- LOADER -->
   <div id="loader">
@@ -660,7 +702,7 @@ function spawnSplat(x, y) {
   el.addEventListener('animationend', () => el.remove());
 }
 document.addEventListener('click', e => {
-  if (!e.target.closest('#lightbox') && !e.target.closest('#dev-banner') && !e.target.closest('#egg'))
+  if (!e.target.closest('#lightbox') && !e.target.closest('#dev-banner') && !e.target.closest('#egg') && !e.target.closest('#site-lock'))
     spawnSplat(e.clientX, e.clientY);
 });
 
