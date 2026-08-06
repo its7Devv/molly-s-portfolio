@@ -393,6 +393,9 @@
     }
     #lock-btn:hover{background:#f5f0e8;color:#0a0806;border-color:#f5f0e8}
     body{overflow:hidden!important}
+    body.unlocked{overflow-x:hidden!important;overflow-y:auto!important}
+    #site-lock{transition:opacity 0.4s ease,visibility 0.4s ease}
+    #site-lock.hidden-lock{opacity:0;visibility:hidden;pointer-events:none}
   </style>
 </head>
 <body>
@@ -826,6 +829,24 @@ document.getElementById('egg').addEventListener('click', () => {
         setTimeout(() => { item.style.transform = ''; }, 600);
       }, i * 25);
     });
+  }
+});
+
+/* ── SECRET UNLOCK (type S I D anywhere) ── */
+const secretCode = ['s','i','d'];
+let secretIdx = 0;
+const siteLock = document.getElementById('site-lock');
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === secretCode[secretIdx]) {
+    secretIdx++;
+    if (secretIdx === secretCode.length) {
+      secretIdx = 0;
+      siteLock.classList.add('hidden-lock');
+      document.body.classList.add('unlocked');
+    }
+  } else {
+    secretIdx = (k === secretCode[0]) ? 1 : 0;
   }
 });
 
